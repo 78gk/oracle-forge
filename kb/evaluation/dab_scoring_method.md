@@ -1,11 +1,3 @@
-
----
-
-# EVALUATION REFERENCE (Supporting)
-
-## File: `kb/evaluation/dab_scoring_method.md`
-
-```markdown
 # DAB Scoring Method
 
 ## pass@1 Definition
@@ -20,8 +12,9 @@
 
 Report 95% confidence interval using Wilson score:
 
+```python
 ci_lower, ci_upper = wilson_score(correct_count, total_count, 0.95)
-
+```
 
 ## Submission Format for GitHub PR
 
@@ -37,12 +30,14 @@ ci_lower, ci_upper = wilson_score(correct_count, total_count, 0.95)
     "dab_yelp_002": {"correct": 47, "total": 50}
   }
 }
+```
 
-Leaderboard Comparison
+## Leaderboard Comparison
 
 Current SOTA: PromptQL + Gemini 3.1 Pro at 54.3% pass@1
 Target: >55% to beat SOTA
-Injection Test
+
+## Injection Test
 
 Q: What is pass@1?
 A: correct first answers divided by total queries

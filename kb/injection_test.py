@@ -1,17 +1,13 @@
 #!/usr/bin/env python3
 """
-KB Injection Test Framework - Groq Llama Version
-
-Tests that each KB document can be injected into a fresh LLM context
-and produce correct answers without additional explanation.
-
-Uses Groq's Llama 3 model (fast and free tier available).
+Injection Test Script for Knowledge Base Documents
+Tests each KB document by injecting it into a fresh LLM context (Groq Llama 3.3 70B)
+and verifying it answers expected questions correctly.
 
 Usage:
-    python3 kb/injection_test_groq.py   # Run all tests
-    python3 kb/injection_test_groq.py --document kb/domain/join_keys.md
-    python3 kb/injection_test_groq.py --model llama3-70b-8192
-    python3 kb/injection_test_groq.py --verbose
+    python injection_test.py --kb-path ./kb --model llama-3.3-70b-versatile
+    python injection_test.py --kb-path ./kb --test-single v1-architecture/01_three_layer_memory.md
+    python injection_test.py --kb-path ./kb --verbose
 """
 
 import os
@@ -21,465 +17,453 @@ import argparse
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional
 from datetime import datetime
-from dotenv import load_dotenv
+from groq import Groq
 
-# Load environment variables
-load_dotenv()
+# ============================================================================
+# CONFIGURATION
+# ============================================================================
 
-# Add parent directory to path
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# Expected answers for each KB document (from injection tests)
+# Format: {document_path: {"question": str, "expected_answer_contains": list, "expected_exact": str}}
+EXPECTED_ANSWERS = {
+    "architecture/memory.md": {
+        "question": "What are the three layers of Claude Code's memory system?",
+        "expected_contains": ["MEMORY.md", "topic files", "session transcripts"],
+        "expected_exact": None
+    },
+    "architecture/autodream_consolidation.md": {
+        "question": "When does autoDream run and what does it do?",
+        "expected_contains": ["Fridays", "compresses", "session transcripts", "resolved_patterns"],
+        "expected_exact": None
+    },
+    "architecture/tool_scoping_philosophy.md": {
+        "question": "Why are 40+ tight tools better than 5 generic tools?",
+        "expected_contains": ["narrow", "precise", "DB-specific", "boundaries"],
+        "expected_exact": None
+    },
+    "architecture/openai_layers.md": {
+        "question": "What are the minimum three context layers for Oracle Forge?",
+        "expected_contains": ["Schema", "institutional", "correction log"],
+        "expected_exact": None
+    },
+    "architecture/conductor_worker_pattern.md": {
+        "question": "How does the agent handle multi-database queries?",
+        "expected_contains": ["Conductor", "spawns", "workers", "merges"],
+        "expected_exact": None
+    },
+    "architecture/evaluation_harness_schema.md": {
+        "question": "What is pass@1 and how is it calculated?",
+        "expected_contains": ["correct first answers", "total queries", "50 trials"],
+        "expected_exact": None
+    },
+    "domain/databases/postgresql_schemas.md": {
+        "question": "What is the format of Yelp business_id?",
+        "expected_contains": ["abc123def456", "TEXT"],
+        "expected_exact": None
+    },
+    "domain/databases/mongodb_schemas.md": {
+        "question": "What is the format of customer_id in MongoDB telecom collection?",
+        "expected_contains": ["CUST-", "STRING", "prefix"],
+        "expected_exact": None
+    },
+    "domain/databases/sqlite_schemas.md": {
+        "question": "What format are customer_ids in SQLite?",
+        "expected_contains": ["INTEGER", "no prefix"],
+        "expected_exact": None
+    },
+    "domain/databases/duckdb_schemas.md": {
+        "question": "What is DuckDB used for in DAB?",
+        "expected_contains": ["analytical", "aggregate", "large datasets"],
+        "expected_exact": None
+    },
+    "domain/joins/join_key_mappings.md": {
+        "question": "How do I join PostgreSQL subscriber_id to MongoDB?",
+        "expected_contains": ["resolve_join_key", "CUST-", "transformation"],
+        "expected_exact": None
+    },
+    "domain/joins/cross_db_join_patterns.md": {
+        "question": "What are the steps for PostgreSQL to MongoDB join?",
+        "expected_contains": ["Query PG", "transform", "query Mongo", "merge"],
+        "expected_exact": None
+    },
+    "domain/unstructured/text_extraction_patterns.md": {
+        "question": "How do I extract negative sentiment from support ticket text?",
+        "expected_contains": ["negative_indicators", ".lower()", "any()"],
+        "expected_exact": None
+    },
+    "domain/unstructured/sentiment_mapping.md": {
+        "question": "How does negation affect sentiment classification?",
+        "expected_contains": ["not good", "negative", "not bad", "non-negative"],
+        "expected_exact": None
+    },
+    "domain/domain_terms/business_glossary.md": {
+        "question": "What does 'active customer' mean in telecom?",
+        "expected_contains": ["last 90 days", "churn_date IS NULL"],
+        "expected_exact": None
+    },
+    "correction/failure_log.md": {
+        "question": "What went wrong on Q023 and what's the fix?",
+        "expected_contains": ["INT to String", "resolve_join_key"],
+        "expected_exact": None
+    },
+    "correction/failure_by_category.md": {
+        "question": "What are DAB's four failure categories?",
+        "expected_contains": ["Multi-Database", "Join Key", "Unstructured", "Domain Knowledge"],
+        "expected_exact": None
+    },
+    "correction/resolved_patterns.md": {
+        "question": "What is the confidence score for PG-INT to Mongo-String transformation?",
+        "expected_contains": ["14/14", "successes"],
+        "expected_exact": None
+    },
+    "correction/regression_prevention.md": {
+        "question": "What happens if regression test fails?",
+        "expected_contains": ["Revert", "log failure", "do not deploy"],
+        "expected_exact": None
+    },
+    "evaluation/dab_scoring_method.md": {
+        "question": "What is pass@1?",
+        "expected_contains": ["correct first answers", "total queries"],
+        "expected_exact": None
+    },
+    "evaluation/submission_format.md": {
+        "question": "What files are required for DAB submission?",
+        "expected_contains": ["results JSON", "AGENT.md"],
+        "expected_exact": None
+    }
+}
 
 
-class GroqLlamaLLM:
-    """
-    Groq Llama LLM wrapper for injection tests.
+# ============================================================================
+# LLM CLIENT
+# ============================================================================
+
+class GroqLLMClient:
+    """Client for Groq's Llama 3.3 70B model"""
     
-    Available models:
-    - "llama-3.1-8b-instant"
-    - "llama-3.3-70b-versatile"
-    """
-    
-    def __init__(self, model: str = "llama-3.3-70b-versatile", temperature: float = 0.0):
+    def __init__(self, api_key: Optional[str] = None, model: str = "llama-3.3-70b-versatile"):
+        self.api_key = api_key or os.environ.get("GROQ_API_KEY")
+        if not self.api_key:
+            raise ValueError("GROQ_API_KEY not found in environment or arguments")
+        
+        self.client = Groq(api_key=self.api_key)
         self.model = model
-        self.temperature = temperature
-        self._client = None
     
-    @property
-    def client(self):
-        """Lazy initialization of Groq client"""
-        if self._client is None:
-            try:
-                from groq import Groq
-                api_key = os.environ.get("GROQ_API_KEY")
-                if not api_key:
-                    raise ValueError("GROQ_API_KEY environment variable not set")
-                self._client = Groq(api_key=api_key)
-            except ImportError:
-                raise ImportError("Please install groq: pip install groq")
-        return self._client
-    
-    def generate(self, prompt: str) -> str:
-        """Generate response from Groq Llama model"""
+    def query(self, system_prompt: str, user_question: str, temperature: float = 0.0) -> str:
+        """
+        Send a query to the LLM with ONLY the document as context.
+        Temperature=0.0 for deterministic, reproducible answers.
+        """
         try:
-            completion = self.client.chat.completions.create(
+            response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
-                    {
-                        "role": "system",
-                        "content": "You are a precise answer engine. Answer based ONLY on the provided document. Be specific and concise. Do not add information not in the document."
-                    },
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_question}
                 ],
-                temperature=self.temperature,
-                max_tokens=500,
-                top_p=1.0
+                temperature=temperature,
+                max_tokens=500
             )
-            return completion.choices[0].message.content
+            return response.choices[0].message.content.strip()
         except Exception as e:
             return f"ERROR: {str(e)}"
 
 
-class MockLLM:
-    """Mock LLM for testing without API key"""
-    
-    def generate(self, prompt: str) -> str:
-        prompt_lower = prompt.lower()
-        
-        if "customerid" in prompt_lower and "postgresql" in prompt_lower:
-            return "CustomerID in PostgreSQL is an integer. In MongoDB it is stored as a string with CUST- prefix."
-        elif "active customer" in prompt_lower:
-            return "An active customer is one who has purchased in the last 90 days."
-        elif "churn" in prompt_lower:
-            return "Churn is when a customer who had activity in the previous period has no activity in the current period."
-        elif "tables" in prompt_lower and "yelp" in prompt_lower:
-            return "The Yelp PostgreSQL database has business, review, and user tables."
-        elif "cast" in prompt_lower:
-            return "Use CAST(customer_id AS TEXT) to convert integer to string."
-        elif "sentiment" in prompt_lower:
-            return "Extract sentiment using sandbox with keyword matching before counting."
-        elif "fiscal" in prompt_lower:
-            return "Fiscal year starts on July 1."
-        elif "gmv" in prompt_lower:
-            return "GMV means Gross Merchandise Value, which is total sales before returns."
-        else:
-            return "Based on the document, the answer is provided in the text above."
+# ============================================================================
+# INJECTION TESTER
+# ============================================================================
 
-
-class InjectionTestRunner:
-    """
-    Runs injection tests on KB documents using Groq Llama.
+class InjectionTester:
+    """Runs injection tests on KB documents"""
     
-    A document PASSES if a fresh LLM with ONLY that document
-    can correctly answer a predefined test question.
-    """
-    
-    def __init__(self, verbose: bool = False, use_mock: bool = False, 
-                 model: str = "llama-3.3-70b-versatile"):
+    def __init__(self, kb_path: Path, llm_client: GroqLLMClient, verbose: bool = False):
+        self.kb_path = kb_path
+        self.llm = llm_client
         self.verbose = verbose
-        self.use_mock = use_mock
-        self.model = model
         self.results = []
-        
-        # Build test suite
-        self.test_suite = self._build_test_suite()
     
-    def _build_test_suite(self) -> Dict[str, List[Tuple[str, str]]]:
-        """
-        Build test suite mapping documents to test questions.
-        
-        Each entry: (document_path, test_question, expected_answer_contains)
-        """
-        return {
-            # Architecture documents
-            "kb/architecture/schemas.md": [
-                (
-                    "What tables are in the Yelp PostgreSQL database?",
-                    "yelp_business,yelp_review,yelp_user"
-                ),
-                (
-                    "What columns does the yelp_review table have?",
-                    "review_id,user_id,business_id,stars,text,date,useful,funny,cool"
-                ),
-                (
-                    "What is the data type of stars in the review table?",
-                    "integer"
-                ),
-            ],
-            
-            "kb/architecture/claude_code_memory.md": [
-                (
-                    "What are the three layers of Claude Code's memory system?",
-                    "MEMORY.md"
-                ),
-                (
-                    "What is the autoDream consolidation pattern?",
-                    "consolidat"
-                ),
-            ],
-            
-            "kb/architecture/openai_six_layers.md": [
-                (
-                    "How many context layers does OpenAI's data agent use?",
-                    "6"
-                ),
-                (
-                    "What is the hardest sub-problem mentioned?",
-                    "table"
-                ),
-            ],
-            
-            # Domain documents
-            "kb/domain/join_keys.md": [
-                (
-                    "How is CustomerID formatted in Yelp PostgreSQL versus MongoDB?",
-                    "integer in PostgreSQL"
-                ),
-                (
-                    "What transformation is needed to join PostgreSQL integer IDs with MongoDB CUST-prefixed IDs?",
-                    "CAST"
-                ),
-                (
-                    "How do you detect a prefix mismatch between databases?",
-                    "prefix"
-                ),
-                (
-                    "What is the resolution pattern for integer to string mismatch?",
-                    "CAST"
-                ),
-            ],
-            
-            "kb/domain/terms.md": [
-                (
-                    "What does 'active customer' mean in the DAB datasets?",
-                    "90 days"
-                ),
-                (
-                    "When does the fiscal year start according to the KB?",
-                    "July 1"
-                ),
-                (
-                    "What does 'churn' mean?",
-                    "previous period"
-                ),
-                (
-                    "What does GMV stand for?",
-                    "Gross Merchandise Value"
-                ),
-                (
-                    "What is the formula for Repeat Purchase Rate?",
-                    "Customers with"
-                ),
-            ],
-            
-            "kb/domain/query_patterns.md": [
-                (
-                    "How do you count records across multiple databases?",
-                    "parallel"
-                ),
-                (
-                    "What is the pattern for cross-database aggregation?",
-                    "merge"
-                ),
-            ],
-            
-            # Evaluation documents
-            "kb/evaluation/dab_format.md": [
-                (
-                    "What is the pass@1 metric?",
-                    "first trial"
-                ),
-                (
-                    "How many trials are recommended per query?",
-                    "5"
-                ),
-            ],
-            
-            # Corrections log
-            "kb/corrections/corrections.md": [
-                (
-                    "What was the fix for the join key mismatch failure?",
-                    "CAST"
-                ),
-                (
-                    "How should sentiment extraction be done?",
-                    "sandbox"
-                ),
-                (
-                    "What was the issue with the active customer definition?",
-                    "90 days"
-                ),
-            ],
-        }
-    
-    def _read_document(self, doc_path: str) -> Optional[str]:
-        """Read document content from file"""
-        full_path = Path(doc_path)
+    def read_document(self, rel_path: str) -> Optional[str]:
+        """Read a KB document from the filesystem"""
+        full_path = self.kb_path / rel_path
         if not full_path.exists():
             return None
-        with open(full_path, 'r') as f:
+        with open(full_path, 'r', encoding='utf-8') as f:
             return f.read()
     
-    def test_document(self, doc_path: str, question: str, expected: str) -> Dict:
+    def test_document(self, rel_path: str, expected: Dict) -> Dict:
         """
-        Test a single document-question pair.
-        
-        Returns:
-            Dict with keys: passed, answer, expected, error
+        Test a single document by injecting it into LLM context
+        and verifying the answer contains expected content.
         """
-        # Read document
-        doc_content = self._read_document(doc_path)
-        if doc_content is None:
-            return {
-                "passed": False,
-                "answer": None,
-                "expected": expected,
-                "error": f"Document not found: {doc_path}"
-            }
-        
-        # Build prompt - ONLY the document, no extra instructions
-        prompt = f"""Document:
-{doc_content}
-
-Question: {question}
-
-Answer based ONLY on the document above. Be specific and concise. If the answer is not in the document, say "Information not found in document"."""
-
-        # Call LLM
-        if self.use_mock:
-            llm = MockLLM()
-        else:
-            llm = GroqLlamaLLM(model=self.model)
-        
-        try:
-            answer = llm.generate(prompt)
-        except Exception as e:
-            return {
-                "passed": False,
-                "answer": None,
-                "expected": expected,
-                "error": str(e)
-            }
-        
-        # Check if answer contains all expected tokens (case-insensitive).
-        # Expected may be comma-separated keywords; all must appear in the answer.
-        answer_lower = answer.lower()
-        tokens = [t.strip() for t in expected.lower().split(",") if t.strip()]
-        passed = all(token in answer_lower for token in tokens)
-        
-        return {
-            "passed": passed,
-            "answer": answer,
-            "expected": expected,
+        result = {
+            "document": rel_path,
+            "passed": False,
+            "llm_answer": None,
             "error": None,
-            "question": question,
-            "doc_path": doc_path
+            "matched_keywords": [],
+            "missing_keywords": []
         }
+        
+        # Read document content
+        content = self.read_document(rel_path)
+        if content is None:
+            result["error"] = f"Document not found: {rel_path}"
+            return result
+        
+        # Build system prompt - ONLY the document content
+        system_prompt = f"""You are a test harness. You have been given EXACTLY ONE document as your only source of knowledge.
+You must answer questions using ONLY the information in this document.
+If the document does not contain the answer, say "I cannot answer from the provided document."
+Do not use any prior knowledge.
+
+Here is the document:
+
+{content}
+
+Remember: Answer ONLY from the document above."""
+
+        # Get LLM answer
+        try:
+            answer = self.llm.query(system_prompt, expected["question"])
+            result["llm_answer"] = answer
+            
+            if self.verbose:
+                print(f"\n  Question: {expected['question']}")
+                print(f"  Answer: {answer[:200]}...")
+            
+            # Verify answer contains expected keywords
+            if expected.get("expected_contains"):
+                keywords = expected["expected_contains"]
+                for keyword in keywords:
+                    if keyword.lower() in answer.lower():
+                        result["matched_keywords"].append(keyword)
+                    else:
+                        result["missing_keywords"].append(keyword)
+                
+                # Pass if at least 70% of keywords match
+                match_rate = len(result["matched_keywords"]) / len(keywords)
+                result["passed"] = match_rate >= 0.7
+                result["match_rate"] = match_rate
+            
+            elif expected.get("expected_exact"):
+                result["passed"] = answer.strip().lower() == expected["expected_exact"].lower()
+                result["match_rate"] = 1.0 if result["passed"] else 0.0
+            
+        except Exception as e:
+            result["error"] = str(e)
+        
+        return result
     
-    def run_all(self) -> Dict:
-        """Run all tests in the test suite"""
-        print("\n" + "=" * 70)
-        print("KB INJECTION TEST SUITE - Groq Llama")
-        print("=" * 70)
-        print(f"Time: {datetime.now().isoformat()}")
-        print(f"Model: {self.model if not self.use_mock else 'MOCK MODE'}")
-        print(f"Mode: {'MOCK' if self.use_mock else 'GROQ LLAMA'}")
-        print("-" * 70)
+    def run_all_tests(self) -> Dict:
+        """Run injection tests for all documents in EXPECTED_ANSWERS"""
+        print(f"\n{'='*60}")
+        print(f"KB INJECTION TEST SUITE")
+        print(f"{'='*60}")
+        print(f"Model: {self.llm.model}")
+        print(f"KB Path: {self.kb_path}")
+        print(f"Documents to test: {len(EXPECTED_ANSWERS)}")
+        print(f"{'='*60}\n")
         
-        total_passed = 0
-        total_failed = 0
-        failed_tests = []
-        
-        for doc_path, test_cases in self.test_suite.items():
-            # Check if document exists
-            if not Path(doc_path).exists():
-                print(f"\n⚠️ SKIPPING: {doc_path} (file not found)")
-                continue
+        for rel_path, expected in EXPECTED_ANSWERS.items():
+            print(f"Testing: {rel_path}")
+            result = self.test_document(rel_path, expected)
+            self.results.append(result)
             
-            print(f"\n📄 Testing: {doc_path}")
+            # Print result
+            if result["passed"]:
+                print(f"  ✅ PASSED (match rate: {result.get('match_rate', 1.0)*100:.0f}%)")
+            elif result["error"]:
+                print(f"  ❌ ERROR: {result['error']}")
+            else:
+                print(f"  ❌ FAILED (matched: {result['matched_keywords']})")
+                print(f"     Missing: {result['missing_keywords']}")
             
-            for question, expected in test_cases:
-                # Truncate question for display
-                display_q = question[:50] + "..." if len(question) > 50 else question
-                print(f"   ❓ {display_q}")
-                
-                result = self.test_document(doc_path, question, expected)
-                
-                if result["passed"]:
-                    print(f"      ✅ PASS (found '{expected}')")
-                    total_passed += 1
-                else:
-                    print(f"      ❌ FAIL (expected '{expected}')")
-                    if self.verbose and result["answer"]:
-                        print(f"         Got: {result['answer'][:150]}...")
-                    elif not self.verbose:
-                        print(f"         (Run with --verbose to see full response)")
-                    total_failed += 1
-                    failed_tests.append(result)
+            if self.verbose and result.get("llm_answer"):
+                print(f"  Answer excerpt: {result['llm_answer'][:150]}...")
         
         # Summary
-        print("\n" + "=" * 70)
-        print("TEST SUMMARY")
-        print("=" * 70)
-        print(f"✅ Passed: {total_passed}")
-        print(f"❌ Failed: {total_failed}")
-        total_tests = total_passed + total_failed
-        if total_tests > 0:
-            print(f"📊 Success rate: {total_passed/total_tests*100:.1f}%")
-        
-        if failed_tests:
-            print("\n❌ FAILED TESTS DETAILS:")
-            for i, ft in enumerate(failed_tests[:5], 1):  # Show first 5
-                print(f"\n   {i}. Document: {ft['doc_path']}")
-                print(f"      Question: {ft['question'][:80]}")
-                print(f"      Expected: '{ft['expected']}'")
-                print(f"      Got: '{ft['answer'][:100] if ft['answer'] else 'None'}...'")
-        
-        # Save results
-        self._save_results(total_passed, total_failed, failed_tests)
-        
-        return {
-            "passed": total_passed,
-            "failed": total_failed,
-            "success_rate": total_passed/total_tests if total_tests > 0 else 0,
-            "overall_pass": total_failed == 0,
-            "failed_tests": failed_tests
-        }
+        return self.summarize()
     
-    def _save_results(self, passed: int, failed: int, failed_tests: List[Dict]):
-        """Save test results to file"""
-        results_path = Path("kb/injection_test_results.json")
+    def test_single_document(self, rel_path: str) -> Dict:
+        """Test a single document by path"""
+        if rel_path not in EXPECTED_ANSWERS:
+            print(f"Warning: {rel_path} not in EXPECTED_ANSWERS. Using generic test.")
+            return {"error": "No test definition found"}
         
-        results = {
-            "timestamp": datetime.now().isoformat(),
-            "model": self.model if not self.use_mock else "MOCK",
+        result = self.test_document(rel_path, EXPECTED_ANSWERS[rel_path])
+        self.results = [result]
+        return self.summarize()
+    
+    def summarize(self) -> Dict:
+        """Generate test summary"""
+        total = len(self.results)
+        passed = sum(1 for r in self.results if r.get("passed", False))
+        failed = sum(1 for r in self.results if not r.get("passed", False) and not r.get("error"))
+        errors = sum(1 for r in self.results if r.get("error"))
+        
+        summary = {
+            "total": total,
             "passed": passed,
             "failed": failed,
-            "success_rate": passed/(passed+failed) if passed+failed > 0 else 0,
-            "failed_tests": [
-                {
-                    "doc_path": ft["doc_path"],
-                    "question": ft["question"],
-                    "expected": ft["expected"],
-                    "answer_preview": ft["answer"][:300] if ft["answer"] else None
-                }
-                for ft in failed_tests
-            ]
+            "errors": errors,
+            "pass_rate": passed / total if total > 0 else 0,
+            "results": self.results
         }
         
-        with open(results_path, 'w') as f:
-            json.dump(results, f, indent=2)
+        print(f"\n{'='*60}")
+        print(f"TEST SUMMARY")
+        print(f"{'='*60}")
+        print(f"Total Documents: {total}")
+        print(f"✅ Passed: {passed}")
+        print(f"❌ Failed: {failed}")
+        print(f"⚠️  Errors: {errors}")
+        print(f"Pass Rate: {summary['pass_rate']*100:.1f}%")
+        print(f"{'='*60}")
         
-        print(f"\n📁 Results saved to: {results_path}")
+        if failed > 0:
+            print("\nFailed Documents:")
+            for r in self.results:
+                if not r.get("passed") and not r.get("error"):
+                    print(f"  - {r['document']}")
+                    print(f"    Missing: {r.get('missing_keywords', [])}")
+        
+        if errors > 0:
+            print("\nErrors:")
+            for r in self.results:
+                if r.get("error"):
+                    print(f"  - {r['document']}: {r['error']}")
+        
+        return summary
+    
+    def save_results(self, output_path: Path):
+        """Save test results to JSON file"""
+        summary = self.summarize()
+        summary["timestamp"] = datetime.now().isoformat()
+        summary["model"] = self.llm.model
+        
+        with open(output_path, 'w', encoding='utf-8') as f:
+            json.dump(summary, f, indent=2, default=str)
+        
+        print(f"\nResults saved to: {output_path}")
+    
+    def update_injection_test_log(self, log_path: Path):
+        """Update INJECTION_TEST_LOG.md with new results"""
+        timestamp = datetime.now().strftime("%Y-%m-%d")
+        summary = self.summarize()
+        
+        log_entry = f"\n| {timestamp} | Full Suite | All documents | {summary['passed']}/{summary['total']} passed | {summary['pass_rate']*100:.0f}% |\n"
+        
+        # Check if log exists
+        if log_path.exists():
+            with open(log_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # Check if entry already exists for today
+            if timestamp in content:
+                # Replace existing entry
+                lines = content.split('\n')
+                new_lines = []
+                skip_next = False
+                for line in lines:
+                    if line.startswith(f"| {timestamp}"):
+                        skip_next = True
+                        continue
+                    if skip_next and line.startswith('|'):
+                        skip_next = False
+                    new_lines.append(line)
+                content = '\n'.join(new_lines)
+            
+            # Find the table body and insert
+            lines = content.split('\n')
+            new_content = []
+            inserted = False
+            for line in lines:
+                new_content.append(line)
+                if '| Date | Document | Test Question | Expected | Result |' in line and not inserted:
+                    new_content.append('|------|----------|---------------|----------|--------|')
+                    new_content.append(log_entry.strip())
+                    inserted = True
+            
+            with open(log_path, 'w', encoding='utf-8') as f:
+                f.write('\n'.join(new_content))
+        else:
+            # Create new log
+            log_content = f"""# KB Document Injection Test Log
+
+## Test Protocol
+1. Start fresh LLM session with ONLY document as context
+2. Ask question the document should answer
+3. PASS = correct answer, FAIL = revise document
+
+## Test Results
+
+| Date | Document | Test Question | Expected | Result |
+|------|----------|---------------|----------|--------|
+{log_entry}
+
+## Summary
+- Last Test Run: {timestamp}
+- Pass Rate: {summary['pass_rate']*100:.0f}%
+- Total Documents: {summary['total']}
+"""
+            with open(log_path, 'w', encoding='utf-8') as f:
+                f.write(log_content)
+        
+        print(f"Injection test log updated: {log_path}")
 
 
-def check_groq_api_key() -> bool:
-    """Check if Groq API key is configured"""
-    api_key = os.getenv("GROQ_API_KEY")
-    if api_key:
-        print("✅ Groq API key found")
-        return True
-    else:
-        print("❌ GROQ_API_KEY not set")
-        print("   Set it with: export GROQ_API_KEY='your-key'")
-        print("   Or add to .env file")
-        return False
-
+# ============================================================================
+# MAIN
+# ============================================================================
 
 def main():
-    parser = argparse.ArgumentParser(description="Run KB injection tests with Groq Llama")
-    parser.add_argument("--document", "-d", type=str, help="Test only this document")
-    parser.add_argument("--verbose", "-v", action="store_true", help="Show full LLM responses")
-    parser.add_argument("--mock", "-m", action="store_true", help="Use mock LLM (no API key needed)")
-    parser.add_argument("--model", "-M", type=str, default="llama-3.3-70b-versatile",
-                        choices=["llama-3.3-70b-versatile", "llama3-70b-8192", "llama3-8b-8192",
-                                "llama-3.1-70b-versatile", "llama-3.1-8b-instant"],
-                        help="Groq model to use")
-    parser.add_argument("--check-key", action="store_true", help="Check if Groq API key is configured")
+    parser = argparse.ArgumentParser(description="Injection test for KB documents using Groq Llama")
+    parser.add_argument("--kb-path", type=str, default="./kb", help="Path to KB directory")
+    parser.add_argument("--model", type=str, default="llama-3.3-70b-versatile", help="Groq model name")
+    parser.add_argument("--api-key", type=str, help="Groq API key (or set GROQ_API_KEY env var)")
+    parser.add_argument("--test-single", type=str, help="Test a single document (relative path from kb)")
+    parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
+    parser.add_argument("--output", type=str, default="./injection_test_results.json", help="Output JSON file")
+    parser.add_argument("--update-log", action="store_true", help="Update INJECTION_TEST_LOG.md")
     
     args = parser.parse_args()
     
-    if args.check_key:
-        check_groq_api_key()
-        return
+    # Initialize LLM client
+    try:
+        llm = GroqLLMClient(api_key=args.api_key, model=args.model)
+        print(f"✅ Connected to Groq API with model: {args.model}")
+    except ValueError as e:
+        print(f"❌ {e}")
+        print("Set GROQ_API_KEY environment variable or use --api-key")
+        sys.exit(1)
     
-    if not args.mock and not check_groq_api_key():
-        print("\n⚠️ No API key found. Use --mock for testing without API.")
-        response = input("Continue with mock mode? (y/n): ")
-        if response.lower() != 'y':
-            sys.exit(1)
-        args.mock = True
+    # Initialize tester
+    kb_path = Path(args.kb_path)
+    if not kb_path.exists():
+        print(f"❌ KB path not found: {kb_path}")
+        sys.exit(1)
     
-    runner = InjectionTestRunner(
-        verbose=args.verbose, 
-        use_mock=args.mock,
-        model=args.model
-    )
+    tester = InjectionTester(kb_path, llm, verbose=args.verbose)
     
-    if args.document:
-        # Test single document
-        doc_path = args.document
-        if doc_path in runner.test_suite:
-            print(f"\n📄 Testing single document: {doc_path}")
-            for question, expected in runner.test_suite[doc_path]:
-                print(f"\n❓ {question}")
-                result = runner.test_document(doc_path, question, expected)
-                status = "✅ PASS" if result["passed"] else "❌ FAIL"
-                print(f"{status} (expected '{expected}')")
-                if not result["passed"] and args.verbose:
-                    print(f"   Got: {result['answer']}")
-        else:
-            print(f"Document not in test suite: {doc_path}")
-            print("Available documents:")
-            for d in runner.test_suite.keys():
-                print(f"  - {d}")
-            sys.exit(1)
+    # Run tests
+    if args.test_single:
+        result = tester.test_single_document(args.test_single)
     else:
-        # Run all tests
-        results = runner.run_all()
-        sys.exit(0 if results["overall_pass"] else 1)
+        result = tester.run_all_tests()
+    
+    # Save results
+    output_path = Path(args.output)
+    tester.save_results(output_path)
+    
+    # Update injection test log
+    if args.update_log:
+        log_path = kb_path / "INJECTION_TEST_LOG.md"
+        tester.update_injection_test_log(log_path)
+    
+    # Exit with appropriate code
+    if result.get("failed", 0) > 0 or result.get("errors", 0) > 0:
+        sys.exit(1)
+    sys.exit(0)
 
 
 if __name__ == "__main__":
