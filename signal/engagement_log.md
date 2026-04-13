@@ -33,7 +33,7 @@ _Covers: X, Reddit, Medium, LinkedIn, Discord_
 | Date | Author | Title | Platform | Word Count | Link | Views |
 |------|--------|-------|----------|------------|------|-------|
 | 2026-04-10 | Kirubel | Engineering Resilience: Solving the Cross-Database Join Key Format Mismatch in AI Agents | Medium | ~1200 | [link](https://medium.com/@kirutew17654321/engineering-resilience-solving-the-cross-database-join-key-format-mismatch-in-ai-agents-ffb17b9d5a02) | -- |
-
+| 2026-04-11 | Meseret | The Silent Killer of AI Data Agents (And How We're Engineering Around It) | LinkedIn | ~1800 | [link](https://www.linkedin.com/pulse/silent-killer-ai-data-agents-how-were-engineering-around-bolled-rsg8f ) | 52 |
 ### Reddit
 
 | Date | Author | Subreddit | Title | Link | Upvotes | Comments |
@@ -47,6 +47,12 @@ _Covers: X, Reddit, Medium, LinkedIn, Discord_
 |------|--------|-----------|-------------|---------|------|
 | 2026-04-11 | Kirubel | r/LocalLLaMA | u/matt-k-wong asking about model size | Clarified: Llama 3.3 70B via Groq. Explained structured docs (tables + code) outperform prose even at 70B -- same info as prose failed injection test, as table passed immediately. Invited comparison across param counts. | [thread](https://www.reddit.com/r/LocalLLaMA/comments/1siqbda/i_kept_running_into_cases_where_retrieval_was/) |
 
+### LinkedIn Replies (comments received on articles)
+
+| Date | Author | Article | From | Comment Summary | Link |
+|------|--------|---------|------|-----------------|------|
+| 2026-04-12 | Meseret | The Silent Killer of AI Data Agents | The AI Agent Index (19 followers) | "Silent failures are genuinely harder to handle than loud ones. Confident wrong answers erode trust without leaving a clear signal to debug. The No data found problem usually traces back to schema mismatches or query construction issues that only surface at the edges of real-world data." | [link](https://www.linkedin.com/pulse/silent-killer-ai-data-agents-how-were-engineering-around-bolled-rsg8f ) |
+
 ### Discord
 
 | Date | Author | Server/Channel | Topic | Link |
@@ -54,6 +60,30 @@ _Covers: X, Reddit, Medium, LinkedIn, Discord_
 | -- | -- | -- | -- | -- |
 
 ---
+### Engagement Metrics
+
+| Date | Platform | Content | Reactions | Comments | Impressions | Views |
+|------|----------|---------|-----------|----------|-------------|-------|
+| 2026-04-11 | LinkedIn | The Silent Killer of AI Data Agents (Meseret) | 28 | 1,132 | 52 |
+
+### Internal Slack Daily Posts
+
+| Date | Author | Channel | Content Summary |
+|------|--------|---------|-----------------|
+| 2026-04-07 to 2026-04-11 | Meseret | #oracle-standup | Daily Signal Corps updates posted every working day covering: what shipped, what is stuck, what is next, community intel gathered. 5 posts total across Week 8. |
+### Internal Slack Daily Posts
+
+| Author | Channel | Period | Content Summary |
+|--------|---------|--------|-----------------|
+| Kirubel | #oracle-standup | 2026-04-07 to 2026-04-11 | Posted daily Slack updates across all 5 days of Week 8 based on standup discussions and GitHub commit status. Updates covered: KB layer completions, injection test results, X thread publications, Medium article launch, Reddit posts, and Signal Corps infrastructure setup. 5 posts total. |
+
+---
+
+### Google Meet Standup Facilitation
+
+| Author | Period | Role | Summary |
+|--------|--------|------|---------|
+| Meseret | 2026-04-07 to 2026-04-11 | Standup Facilitator | Led  daily Google Meet standups across Week 8. Responsibilities included: opening each session, reminding team members to join, giving each of the 6 members floor time to share progress, asking targeted questions about blockers and next steps, and ensuring alignment between Drivers, Intelligence Officers, and Signal Corps before closing each session. |
 
 ## Week 9 (Apr 14-18, 2026)
 

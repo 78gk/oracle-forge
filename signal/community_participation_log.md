@@ -50,7 +50,7 @@ _Each entry names the specific technical focus and intelligence gathered._
 
 ---
 
-## 2026-04-11 (Day 5 - Signal Infrastructure + Reddit Launch)
+## 2026-04-11 (Day 5 - Signal Infrastructure + Reddit Launch + Linkedin Article)
 
 | Category | Platform | Technical Focus | Intelligence / Action | Link |
 |----------|----------|-----------------|----------------------|------|
@@ -60,6 +60,7 @@ _Each entry names the specific technical focus and intelligence gathered._
 | Technical Deep-Dive | Internal | Architecture | Cloned repo, reviewed develop branch. Mapped full KB structure: 6 architecture + 9 domain + 4 correction + 3 evaluation docs. Verified 21/21 injection test results. | local |
 | Resource Acquisition | Internal | -- | Created signal/ directory infrastructure: engagement_log.md, community_participation_log.md, resource_acquisition.md. Branch: feat/signal-corps-engagement. | local |
 | Community Participation | X | -- | Curated 4 high-engagement accounts for reply-threading strategy: @shipp_ai, @_avichawla, @himanshustwts, @sh_reya. Identified Karpathy LLM wiki gist as content anchor. | -- |
+| Community Participation | LinkedIn | Silent Failure, Join Keys, Architecture | SC1 published "The Silent Killer of AI Data Agents" (~1800 words) — covers cross-database join key mismatch (PG INT vs MongoDB CUST-string), DAB 38% ceiling, three-layer context architecture, ETL vs runtime resolution. Shared in team Slack for visibility. | [article](https://www.linkedin.com/pulse/silent-killer-ai-data-agents-how-were-engineering-around-bolled-rsg8f) |
 
 ---
 
@@ -73,6 +74,9 @@ _Each entry names the specific technical focus and intelligence gathered._
 | Evaluation | 4 | Internal, X, Reddit |
 | Unstructured Text | 1 | Internal |
 | Domain Knowledge | 1 | Internal |
+| Team Coordination | 4 | Internal, Google Meet |
+| Silent Failure | 2 | LinkedIn |
+
 
 ## Gaps to Address in Week 9
 - **Discord:** Zero engagement. Target: DAB community Discord, Hugging Face
