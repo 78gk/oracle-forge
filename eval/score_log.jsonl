@@ -3,3 +3,13 @@
 {"stage": "final", "timestamp_utc": "2026-04-11T15:55:12.696766+00:00", "total_queries": 54, "trials_per_query": 3, "pass@1": 1.0, "overall_trial_accuracy": 1.0, "connected_db_count": 2, "active_db_types": ["mongodb", "postgresql"]}
 {"stage": "baseline", "dataset": "yelp", "timestamp_utc": "2026-04-14T08:21:34.686201+00:00", "total_queries": 7, "pass@1": 1.0, "confidence_interval_95": [0.6457, 1.0]}
 {"stage": "final", "dataset": "DataAgentBench Yelp", "timestamp_utc": "2026-04-14T11:10:48.932729+00:00", "total_queries": 7, "trials_per_query": 50, "pass@1": 0.0, "overall_trial_accuracy": 0.0}
+{"stage": "final", "dataset": "DataAgentBench Yelp", "timestamp_utc": "2026-04-14T12:47:02.015233+00:00", "total_queries": 0, "trials_per_query": 50, "pass@1": 0.0, "overall_trial_accuracy": 0.0}
+{"stage": "final", "dataset": "DataAgentBench yelp", "timestamp_utc": "2026-04-14T12:52:59.981295+00:00", "total_queries": 7, "trials_per_query": 1, "pass@1": 0.0, "overall_trial_accuracy": 0.0}
+{"stage": "final", "dataset": "DataAgentBench yelp", "timestamp_utc": "2026-04-14T12:53:58.068934+00:00", "total_queries": 7, "trials_per_query": 1, "pass@1": 0.0, "overall_trial_accuracy": 0.0}
+{"stage": "final", "dataset": "DataAgentBench yelp", "timestamp_utc": "2026-04-14T13:21:33.786879+00:00", "total_queries": 7, "trials_per_query": 50, "pass@1": 0.0, "overall_trial_accuracy": 0.0}
+{"stage": "final", "dataset": "DataAgentBench yelp", "timestamp_utc": "2026-04-14T17:08:43.699930+00:00", "total_queries": 7, "trials_per_query": 1, "pass@1": 0.0, "overall_trial_accuracy": 0.0}
+{"stage": "final", "dataset": "DataAgentBench yelp", "timestamp_utc": "2026-04-14T17:15:22.995002+00:00", "total_queries": 7, "trials_per_query": 1, "pass@1": 0.0, "overall_trial_accuracy": 0.0}
+{"stage": "final", "dataset": "DataAgentBench yelp", "timestamp_utc": "2026-04-14T17:19:52.613328+00:00", "total_queries": 7, "trials_per_query": 10, "pass@1": 0.0, "overall_trial_accuracy": 0.0}
+{"stage": "final", "dataset": "DataAgentBench yelp", "timestamp_utc": "2026-04-14T17:28:43.896980+00:00", "total_queries": 7, "trials_per_query": 5, "pass@1": 0.0, "overall_trial_accuracy": 0.0}
+{"stage": "final", "dataset": "DataAgentBench yelp", "timestamp_utc": "2026-04-14T17:37:12.340981+00:00", "total_queries": 7, "trials_per_query": 3, "pass@1": 0.0, "overall_trial_accuracy": 0.0}
+{"stage": "final", "dataset": "DataAgentBench yelp", "timestamp_utc": "2026-04-14T19:43:01.794281+00:00", "total_queries": 7, "trials_per_query": 3, "pass@1": 0.0, "overall_trial_accuracy": 0.0}

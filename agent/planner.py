@@ -168,7 +168,15 @@ class QueryPlanner:
                 "pipeline": pipeline,
                 "question": question,
             }
-        table = self._first_name(schema.get("tables"), "primary_table")
+        table = self._select_sql_table(question, schema.get("tables"))
+        if not table:
+            sql = "SELECT 1 AS health_check"
+            return {
+                "database": db,
+                "dialect": dialect,
+                "sql": sql,
+                "question": question,
+            }
         sql = f"SELECT * FROM {table} LIMIT 100"
         if "count" in question:
             sql = f"SELECT COUNT(*) AS count FROM {table}"
@@ -180,6 +188,48 @@ class QueryPlanner:
             "sql": sql,
             "question": question,
         }
+
+    def _select_sql_table(self, question: str, tables: Any) -> str:
+        candidates: List[str] = []
+        if isinstance(tables, list):
+            for item in tables:
+                if isinstance(item, dict) and isinstance(item.get("name"), str):
+                    candidates.append(item["name"])
+                elif isinstance(item, str):
+                    candidates.append(item)
+        if not candidates:
+            return ""
+
+        lowered = question.lower()
+        if any(token in lowered for token in ["rating", "review"]):
+            for preferred in ["review", "reviews"]:
+                if preferred in candidates:
+                    return preferred
+                for table in candidates:
+                    if preferred in table.lower():
+                        return table
+        if "tip" in lowered:
+            for preferred in ["tip", "tips"]:
+                if preferred in candidates:
+                    return preferred
+                for table in candidates:
+                    if preferred in table.lower():
+                        return table
+        if "user" in lowered:
+            for preferred in ["user", "users"]:
+                if preferred in candidates:
+                    return preferred
+                for table in candidates:
+                    if preferred in table.lower():
+                        return table
+        if "checkin" in lowered:
+            for preferred in ["checkin", "checkins"]:
+                if preferred in candidates:
+                    return preferred
+                for table in candidates:
+                    if preferred in table.lower():
+                        return table
+        return candidates[0]
 
     @staticmethod
     def _first_name(collection: Any, fallback: str) -> str:

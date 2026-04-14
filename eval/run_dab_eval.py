@@ -7,6 +7,8 @@ from pathlib import Path
 import sys
 from typing import Any, Dict, List
 
+from dotenv import load_dotenv
+
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
@@ -15,33 +17,15 @@ from agent.main import run_agent
 from eval.evaluator import OracleForgeEvaluator
 
 
-def _load_yelp_queries(repo_root: Path) -> List[Dict[str, Any]]:
-    dab_root = repo_root / "DataAgentBench"
-    queries: List[Dict[str, Any]] = []
-    for query_dir in sorted(dab_root.glob("query*")):
-        query_path = query_dir / "query.json"
-        if not query_path.exists():
-            continue
-        text = json.loads(query_path.read_text(encoding="utf-8"))
-        queries.append(
-            {
-                "id": query_dir.name,
-                "question": text,
-                "available_databases": ["duckdb", "mongodb", "postgresql", "sqlite"],
-                "schema_info": {},
-                "validator_path": str(query_dir / "validate.py"),
-            }
-        )
-    return queries
-
-
 def main() -> None:
+    load_dotenv(ROOT / ".env", override=True)
     eval_root = ROOT / "eval"
     eval_root.mkdir(parents=True, exist_ok=True)
     trials = int(os.getenv("DAB_TRIALS_PER_QUERY", "50"))
+    dataset = os.getenv("DAB_DATASET", "yelp")
 
     evaluator = OracleForgeEvaluator(repo_root=ROOT)
-    queries = _load_yelp_queries(ROOT)
+    queries = evaluator.load_dataagentbench_queries(dataset=dataset)
 
     all_query_reports: List[Dict[str, Any]] = []
     total_first_correct = 0
@@ -93,10 +77,16 @@ def main() -> None:
     total_queries = len(queries)
     pass_at_1 = round(total_first_correct / max(1, total_queries), 4)
     overall_trial_accuracy = round(total_trial_correct / max(1, total_trials), 4)
+    dataset_label = f"DataAgentBench {dataset}"
+    dataset_path = ROOT / "DataAgentBench"
+    if dataset.lower().startswith("query_"):
+        dataset_path = dataset_path / dataset
+    else:
+        dataset_path = dataset_path / f"query_{dataset}"
 
     results = {
-        "dataset": "DataAgentBench Yelp",
-        "dataset_path": str(ROOT / "DataAgentBench"),
+        "dataset": dataset_label,
+        "dataset_path": str(dataset_path),
         "evaluated_at_utc": datetime.now(timezone.utc).isoformat(),
         "total_queries": total_queries,
         "trials_per_query": trials,
@@ -112,7 +102,7 @@ def main() -> None:
 
     score_entry = {
         "stage": "final",
-        "dataset": "DataAgentBench Yelp",
+        "dataset": dataset_label,
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
         "total_queries": total_queries,
         "trials_per_query": trials,
@@ -125,6 +115,7 @@ def main() -> None:
     print(
         json.dumps(
             {
+                "dataset": dataset,
                 "total_queries": total_queries,
                 "trials_per_query": trials,
                 "pass@1": pass_at_1,

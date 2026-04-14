@@ -152,7 +152,65 @@ docker build -t python-data:3.12 .
 $env:DAB_EXECUTOR="local"
 ```
 
-### 5) Run a first DAB query test
+### 4b) Start MCP Toolbox for Oracle Forge eval (Docker, required)
+
+`eval/run_dab_eval.py` uses Oracle Forge's MCP tool client (not DAB's built-in DataAgent runtime), so MCP Toolbox must be up before evaluation.
+
+1. Create root `.env` from `.env.example` and set DB/toolbox values:
+   - `MCP_BASE_URL`
+   - `POSTGRES_DSN`
+   - `MONGODB_URI`
+   - `MONGODB_DATABASE`
+   - `SQLITE_PATH`
+   - `DUCKDB_PATH`
+   - keep `ORACLE_FORGE_MOCK_MODE=false`
+   - keep `ORACLE_FORGE_ALLOW_MOCK_FALLBACK=false`
+2. Start Docker Desktop, then bring up databases and seed Yelp Mongo data:
+
+```powershell
+docker compose -f mcp/docker-compose.yml up -d postgres mongo
+docker compose -f mcp/docker-compose.yml --profile seed run --rm mongo-seed
+```
+
+3. Start/recreate Toolbox:
+
+```powershell
+docker compose -f mcp/docker-compose.yml up -d --force-recreate toolbox
+```
+
+4. Verify MCP is reachable:
+
+```powershell
+.\scripts\mcp_status.ps1
+```
+
+Note:
+- Current Toolbox config exposes `postgres_sql_query`, `sqlite_sql_query`, and Mongo aggregate tools.
+- For DAB datasets that declare a DuckDB file (for example Yelp `user_database`), the agent uses a local DuckDB SQL fallback via `DUCKDB_PATH`.
+- Ensure the Python environment running eval has the `duckdb` package installed.
+
+Or manual MCP check:
+
+```powershell
+$body = '{"jsonrpc":"2.0","id":"tools-list","method":"tools/list","params":{}}'
+curl.exe -X POST http://localhost:5000/mcp -H "Content-Type: application/json" -d $body
+```
+
+5. Optional one-command startup wrapper:
+
+```powershell
+.\scripts\mcp_up.ps1
+```
+
+6. Shut down when done:
+
+```powershell
+.\scripts\mcp_down.ps1
+```
+
+If MCP is unreachable, eval now fails fast with an explicit error instead of silently using mock data.
+
+### 5) Run a first DAB built-in agent query test
 
 ```bash
 # from DataAgentBench/
@@ -169,6 +227,28 @@ python -c "from pathlib import Path; import json; from common_scaffold.validate.
 ```
 
 Expected for `stockindex/query1`: `is_valid: True` and target symbol `399001.SZ`.
+
+### 7) Run Oracle Forge eval against DAB (after MCP is up)
+
+Set these once in root `.env` (no inline PowerShell env args required):
+- `MCP_BASE_URL=http://localhost:5000`
+- `ORACLE_FORGE_MOCK_MODE=false`
+- `ORACLE_FORGE_ALLOW_MOCK_FALLBACK=false`
+- `LLM_PROVIDER=openrouter`
+- `OPENROUTER_API_KEY=<your_key>`
+- `MODEL_NAME=openai/gpt-4o-mini`
+- `DAB_DATASET=yelp`
+- `DAB_TRIALS_PER_QUERY=1` (smoke) or `50` (full)
+
+Then run:
+
+```powershell
+python eval\run_dab_eval.py
+```
+
+Outputs are written to:
+- `eval/results.json`
+- `eval/score_log.jsonl`
 
 ## Team Workflow for Agent Improvement
 

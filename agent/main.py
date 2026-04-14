@@ -114,17 +114,20 @@ def _log_agent_run(payload: Dict[str, Any]) -> None:
 def run_agent(question: str, available_databases: List[str], schema_info: Dict[str, Any]) -> Dict[str, Any]:
     trace: List[Dict[str, Any]] = []
     repo_root = Path(__file__).resolve().parents[1]
-    load_dotenv(repo_root / ".env")
+    load_dotenv(repo_root / ".env", override=True)
     token_limiter = TokenLimiter(
         max_prompt_tokens=int(os.getenv("MAX_PROMPT_TOKENS", "3500")),
         max_tool_loops=int(os.getenv("MAX_TOOL_LOOPS", "12")),
     )
     mock_mode = _env_bool("ORACLE_FORGE_MOCK_MODE", False)
+    allow_mock_fallback = _env_bool("ORACLE_FORGE_ALLOW_MOCK_FALLBACK", False)
     tools = MCPToolsClient(
         base_url=os.getenv("MCP_BASE_URL", "http://localhost:5000"),
         mock_mode=mock_mode,
+        allow_fallback_to_mock=allow_mock_fallback,
     )
     discovered_tools = tools.discover_tools()
+    effective_mock_mode = tools.mock_mode
     discovered_schema = tools.get_schema_metadata()
     schema_metadata = SchemaIntrospectionTool().collect(discovered_schema)
     context = ContextBuilder().build(question, available_databases, schema_info, schema_metadata)
@@ -224,7 +227,7 @@ def run_agent(question: str, available_databases: List[str], schema_info: Dict[s
                 successful_steps=0,
                 retries=retries,
                 explicit_failure=True,
-                used_mock_mode=mock_mode,
+                used_mock_mode=effective_mock_mode,
             ),
             "trace": trace,
             "query_trace": trace,
@@ -244,7 +247,7 @@ def run_agent(question: str, available_databases: List[str], schema_info: Dict[s
                     successful_steps=0,
                     retries=retries,
                     explicit_failure=True,
-                    used_mock_mode=mock_mode,
+                    used_mock_mode=effective_mock_mode,
                 ),
             },
             "token_usage": token_limiter.usage_entry(
@@ -273,7 +276,7 @@ def run_agent(question: str, available_databases: List[str], schema_info: Dict[s
         successful_steps=successful_steps,
         retries=retries,
         explicit_failure=explicit_failure,
-        used_mock_mode=mock_mode,
+        used_mock_mode=effective_mock_mode,
     )
     response = {
         "status": "success" if not explicit_failure else "partial_success",
@@ -287,7 +290,7 @@ def run_agent(question: str, available_databases: List[str], schema_info: Dict[s
         "tools_discovered_count": len(discovered_tools),
         "used_databases": used_databases,
         "validation_status": sandbox_outcome["validation_status"],
-        "mock_mode": mock_mode,
+        "mock_mode": effective_mock_mode,
         "predicted_queries": predicted_queries,
         "architecture_disclosure": {
             "mcp_tools_used": [entry.get("tool") for entry in used_databases],
