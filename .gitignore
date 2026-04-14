@@ -2,7 +2,15 @@
 *.env
 __pycache__/
 *.pyc
+<<<<<<< HEAD
+venv/
+benchmark/spider/
+structure.py
+=======
 
 # Signal Corps drafts and strategy (local only)
 signal/drafts/
 signal/daily/
+>>>>>>> 2843265fbdd2f9fa962e25e160647fbd530c9478
+DataAgentBench/
+gemini/

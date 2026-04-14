@@ -1,0 +1,1066 @@
+{
+  "dataset_path": "C:\\Users\\Eyor.G\\Documents\\Tenx\\oracle-forge\\oracle-forge\\eval\\regression_suite.json",
+  "evaluated_at_utc": "2026-04-14T11:12:18.395626+00:00",
+  "total_queries": 12,
+  "trials_per_query": 1,
+  "correct_first_answers": 12,
+  "pass@1": 1.0,
+  "pass@1_ci95": [
+    0.7575,
+    1.0
+  ],
+  "overall_trial_accuracy": 1.0,
+  "connected_db_count": 2,
+  "active_db_types": [
+    "mongodb",
+    "postgresql"
+  ],
+  "queries": [
+    {
+      "id": "reg_001",
+      "question": "Count subscribers with support tickets across PostgreSQL and MongoDB.",
+      "expected": {
+        "type": "equals",
+        "value": 2
+      },
+      "first_trial_correct": true,
+      "trial_accuracy": 1.0,
+      "trials": [
+        {
+          "trial": 1,
+          "correct": true,
+          "status": "success",
+          "answer": 2,
+          "confidence": 0.95,
+          "trace": [
+            {
+              "tool_used": "mongodb_aggregate_pipeline",
+              "selection_reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+              "dialect_handling": "mongodb_aggregation",
+              "raw_query": [
+                {
+                  "$limit": 100
+                },
+                {
+                  "$group": {
+                    "_id": null,
+                    "count": {
+                      "$sum": 1
+                    }
+                  }
+                }
+              ],
+              "result_summary": "list(len=2)",
+              "duration_ms": 0,
+              "success": true,
+              "failure_type": null
+            },
+            {
+              "tool_used": "postgres_primary_sql",
+              "selection_reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+              "dialect_handling": "sql",
+              "raw_query": "SELECT COUNT(*) AS count FROM subscribers",
+              "result_summary": "list(len=2)",
+              "duration_ms": 0,
+              "success": true,
+              "failure_type": null
+            },
+            {
+              "merge_event": true,
+              "left_key": "customer_id",
+              "right_key": "subscriber_id",
+              "rows_before": 2,
+              "rows_after": 2,
+              "join_resolver_used": "utils.join_key_resolver.JoinKeyResolver"
+            }
+          ],
+          "used_databases": [
+            {
+              "database": "mongodb",
+              "reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+              "tool": "mongodb_aggregate_pipeline"
+            },
+            {
+              "database": "postgresql",
+              "reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+              "tool": "postgres_primary_sql"
+            }
+          ],
+          "predicted_queries": [
+            {
+              "database": "mongodb",
+              "dialect": "mongodb_aggregation",
+              "query": [
+                {
+                  "$limit": 100
+                },
+                {
+                  "$group": {
+                    "_id": null,
+                    "count": {
+                      "$sum": 1
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "database": "postgresql",
+              "dialect": "sql",
+              "query": "SELECT COUNT(*) AS count FROM subscribers"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "reg_002",
+      "question": "How many high-value customers have tickets across PostgreSQL and MongoDB?",
+      "expected": {
+        "type": "equals",
+        "value": 1
+      },
+      "first_trial_correct": true,
+      "trial_accuracy": 1.0,
+      "trials": [
+        {
+          "trial": 1,
+          "correct": true,
+          "status": "success",
+          "answer": 1,
+          "confidence": 0.95,
+          "trace": [
+            {
+              "tool_used": "mongodb_aggregate_pipeline",
+              "selection_reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+              "dialect_handling": "mongodb_aggregation",
+              "raw_query": [
+                {
+                  "$limit": 100
+                }
+              ],
+              "result_summary": "list(len=2)",
+              "duration_ms": 0,
+              "success": true,
+              "failure_type": null
+            },
+            {
+              "tool_used": "postgres_primary_sql",
+              "selection_reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+              "dialect_handling": "sql",
+              "raw_query": "SELECT * FROM subscribers LIMIT 100",
+              "result_summary": "list(len=2)",
+              "duration_ms": 0,
+              "success": true,
+              "failure_type": null
+            },
+            {
+              "merge_event": true,
+              "left_key": "customer_id",
+              "right_key": "subscriber_id",
+              "rows_before": 2,
+              "rows_after": 2,
+              "join_resolver_used": "utils.join_key_resolver.JoinKeyResolver"
+            }
+          ],
+          "used_databases": [
+            {
+              "database": "mongodb",
+              "reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+              "tool": "mongodb_aggregate_pipeline"
+            },
+            {
+              "database": "postgresql",
+              "reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+              "tool": "postgres_primary_sql"
+            }
+          ],
+          "predicted_queries": [
+            {
+              "database": "mongodb",
+              "dialect": "mongodb_aggregation",
+              "query": [
+                {
+                  "$limit": 100
+                }
+              ]
+            },
+            {
+              "database": "postgresql",
+              "dialect": "sql",
+              "query": "SELECT * FROM subscribers LIMIT 100"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "reg_003",
+      "question": "Count negative sentiment issues from MongoDB tickets joined with PostgreSQL subscribers.",
+      "expected": {
+        "type": "equals",
+        "value": 1
+      },
+      "first_trial_correct": true,
+      "trial_accuracy": 1.0,
+      "trials": [
+        {
+          "trial": 1,
+          "correct": true,
+          "status": "success",
+          "answer": 1,
+          "confidence": 0.95,
+          "trace": [
+            {
+              "tool_used": "mongodb_aggregate_pipeline",
+              "selection_reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+              "dialect_handling": "mongodb_aggregation",
+              "raw_query": [
+                {
+                  "$limit": 100
+                },
+                {
+                  "$group": {
+                    "_id": null,
+                    "count": {
+                      "$sum": 1
+                    }
+                  }
+                }
+              ],
+              "result_summary": "list(len=2)",
+              "duration_ms": 0,
+              "success": true,
+              "failure_type": null
+            },
+            {
+              "tool_used": "postgres_primary_sql",
+              "selection_reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+              "dialect_handling": "sql",
+              "raw_query": "SELECT COUNT(*) AS count FROM subscribers",
+              "result_summary": "list(len=2)",
+              "duration_ms": 0,
+              "success": true,
+              "failure_type": null
+            },
+            {
+              "merge_event": true,
+              "left_key": "customer_id",
+              "right_key": "subscriber_id",
+              "rows_before": 2,
+              "rows_after": 2,
+              "join_resolver_used": "utils.join_key_resolver.JoinKeyResolver"
+            }
+          ],
+          "used_databases": [
+            {
+              "database": "mongodb",
+              "reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+              "tool": "mongodb_aggregate_pipeline"
+            },
+            {
+              "database": "postgresql",
+              "reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+              "tool": "postgres_primary_sql"
+            }
+          ],
+          "predicted_queries": [
+            {
+              "database": "mongodb",
+              "dialect": "mongodb_aggregation",
+              "query": [
+                {
+                  "$limit": 100
+                },
+                {
+                  "$group": {
+                    "_id": null,
+                    "count": {
+                      "$sum": 1
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "database": "postgresql",
+              "dialect": "sql",
+              "query": "SELECT COUNT(*) AS count FROM subscribers"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "reg_004",
+      "question": "Count all subscriber-ticket pairs using PostgreSQL and MongoDB.",
+      "expected": {
+        "type": "equals",
+        "value": 2
+      },
+      "first_trial_correct": true,
+      "trial_accuracy": 1.0,
+      "trials": [
+        {
+          "trial": 1,
+          "correct": true,
+          "status": "success",
+          "answer": 2,
+          "confidence": 0.95,
+          "trace": [
+            {
+              "tool_used": "mongodb_aggregate_pipeline",
+              "selection_reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+              "dialect_handling": "mongodb_aggregation",
+              "raw_query": [
+                {
+                  "$limit": 100
+                },
+                {
+                  "$group": {
+                    "_id": null,
+                    "count": {
+                      "$sum": 1
+                    }
+                  }
+                }
+              ],
+              "result_summary": "list(len=2)",
+              "duration_ms": 0,
+              "success": true,
+              "failure_type": null
+            },
+            {
+              "tool_used": "postgres_primary_sql",
+              "selection_reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+              "dialect_handling": "sql",
+              "raw_query": "SELECT COUNT(*) AS count FROM subscribers",
+              "result_summary": "list(len=2)",
+              "duration_ms": 0,
+              "success": true,
+              "failure_type": null
+            },
+            {
+              "merge_event": true,
+              "left_key": "customer_id",
+              "right_key": "subscriber_id",
+              "rows_before": 2,
+              "rows_after": 2,
+              "join_resolver_used": "utils.join_key_resolver.JoinKeyResolver"
+            }
+          ],
+          "used_databases": [
+            {
+              "database": "mongodb",
+              "reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+              "tool": "mongodb_aggregate_pipeline"
+            },
+            {
+              "database": "postgresql",
+              "reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+              "tool": "postgres_primary_sql"
+            }
+          ],
+          "predicted_queries": [
+            {
+              "database": "mongodb",
+              "dialect": "mongodb_aggregation",
+              "query": [
+                {
+                  "$limit": 100
+                },
+                {
+                  "$group": {
+                    "_id": null,
+                    "count": {
+                      "$sum": 1
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "database": "postgresql",
+              "dialect": "sql",
+              "query": "SELECT COUNT(*) AS count FROM subscribers"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "reg_005",
+      "question": "How many records exist when joining subscriber and ticket data across databases?",
+      "expected": {
+        "type": "equals",
+        "value": 2
+      },
+      "first_trial_correct": true,
+      "trial_accuracy": 1.0,
+      "trials": [
+        {
+          "trial": 1,
+          "correct": true,
+          "status": "success",
+          "answer": 2,
+          "confidence": 0.95,
+          "trace": [
+            {
+              "tool_used": "mongodb_aggregate_pipeline",
+              "selection_reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+              "dialect_handling": "mongodb_aggregation",
+              "raw_query": [
+                {
+                  "$limit": 100
+                }
+              ],
+              "result_summary": "list(len=2)",
+              "duration_ms": 0,
+              "success": true,
+              "failure_type": null
+            }
+          ],
+          "used_databases": [
+            {
+              "database": "mongodb",
+              "reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+              "tool": "mongodb_aggregate_pipeline"
+            }
+          ],
+          "predicted_queries": [
+            {
+              "database": "mongodb",
+              "dialect": "mongodb_aggregation",
+              "query": [
+                {
+                  "$limit": 100
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "reg_006",
+      "question": "Count negative sentiment support ticket mentions across MongoDB and PostgreSQL context.",
+      "expected": {
+        "type": "equals",
+        "value": 1
+      },
+      "first_trial_correct": true,
+      "trial_accuracy": 1.0,
+      "trials": [
+        {
+          "trial": 1,
+          "correct": true,
+          "status": "success",
+          "answer": 1,
+          "confidence": 0.95,
+          "trace": [
+            {
+              "tool_used": "mongodb_aggregate_pipeline",
+              "selection_reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+              "dialect_handling": "mongodb_aggregation",
+              "raw_query": [
+                {
+                  "$limit": 100
+                },
+                {
+                  "$group": {
+                    "_id": null,
+                    "count": {
+                      "$sum": 1
+                    }
+                  }
+                }
+              ],
+              "result_summary": "list(len=2)",
+              "duration_ms": 0,
+              "success": true,
+              "failure_type": null
+            },
+            {
+              "tool_used": "postgres_primary_sql",
+              "selection_reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+              "dialect_handling": "sql",
+              "raw_query": "SELECT COUNT(*) AS count FROM subscribers",
+              "result_summary": "list(len=2)",
+              "duration_ms": 0,
+              "success": true,
+              "failure_type": null
+            },
+            {
+              "merge_event": true,
+              "left_key": "customer_id",
+              "right_key": "subscriber_id",
+              "rows_before": 2,
+              "rows_after": 2,
+              "join_resolver_used": "utils.join_key_resolver.JoinKeyResolver"
+            }
+          ],
+          "used_databases": [
+            {
+              "database": "mongodb",
+              "reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+              "tool": "mongodb_aggregate_pipeline"
+            },
+            {
+              "database": "postgresql",
+              "reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+              "tool": "postgres_primary_sql"
+            }
+          ],
+          "predicted_queries": [
+            {
+              "database": "mongodb",
+              "dialect": "mongodb_aggregation",
+              "query": [
+                {
+                  "$limit": 100
+                },
+                {
+                  "$group": {
+                    "_id": null,
+                    "count": {
+                      "$sum": 1
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "database": "postgresql",
+              "dialect": "sql",
+              "query": "SELECT COUNT(*) AS count FROM subscribers"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "reg_007",
+      "question": "Count subscribers with support tickets across PostgreSQL and MongoDB batch 5.",
+      "expected": {
+        "type": "equals",
+        "value": 2
+      },
+      "first_trial_correct": true,
+      "trial_accuracy": 1.0,
+      "trials": [
+        {
+          "trial": 1,
+          "correct": true,
+          "status": "success",
+          "answer": 2,
+          "confidence": 0.95,
+          "trace": [
+            {
+              "tool_used": "mongodb_aggregate_pipeline",
+              "selection_reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+              "dialect_handling": "mongodb_aggregation",
+              "raw_query": [
+                {
+                  "$limit": 100
+                },
+                {
+                  "$group": {
+                    "_id": null,
+                    "count": {
+                      "$sum": 1
+                    }
+                  }
+                }
+              ],
+              "result_summary": "list(len=2)",
+              "duration_ms": 0,
+              "success": true,
+              "failure_type": null
+            },
+            {
+              "tool_used": "postgres_primary_sql",
+              "selection_reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+              "dialect_handling": "sql",
+              "raw_query": "SELECT COUNT(*) AS count FROM subscribers",
+              "result_summary": "list(len=2)",
+              "duration_ms": 0,
+              "success": true,
+              "failure_type": null
+            },
+            {
+              "merge_event": true,
+              "left_key": "customer_id",
+              "right_key": "subscriber_id",
+              "rows_before": 2,
+              "rows_after": 2,
+              "join_resolver_used": "utils.join_key_resolver.JoinKeyResolver"
+            }
+          ],
+          "used_databases": [
+            {
+              "database": "mongodb",
+              "reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+              "tool": "mongodb_aggregate_pipeline"
+            },
+            {
+              "database": "postgresql",
+              "reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+              "tool": "postgres_primary_sql"
+            }
+          ],
+          "predicted_queries": [
+            {
+              "database": "mongodb",
+              "dialect": "mongodb_aggregation",
+              "query": [
+                {
+                  "$limit": 100
+                },
+                {
+                  "$group": {
+                    "_id": null,
+                    "count": {
+                      "$sum": 1
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "database": "postgresql",
+              "dialect": "sql",
+              "query": "SELECT COUNT(*) AS count FROM subscribers"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "reg_008",
+      "question": "How many high-value customers have tickets across PostgreSQL and MongoDB batch 6?",
+      "expected": {
+        "type": "equals",
+        "value": 1
+      },
+      "first_trial_correct": true,
+      "trial_accuracy": 1.0,
+      "trials": [
+        {
+          "trial": 1,
+          "correct": true,
+          "status": "success",
+          "answer": 1,
+          "confidence": 0.95,
+          "trace": [
+            {
+              "tool_used": "mongodb_aggregate_pipeline",
+              "selection_reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+              "dialect_handling": "mongodb_aggregation",
+              "raw_query": [
+                {
+                  "$limit": 100
+                }
+              ],
+              "result_summary": "list(len=2)",
+              "duration_ms": 0,
+              "success": true,
+              "failure_type": null
+            },
+            {
+              "tool_used": "postgres_primary_sql",
+              "selection_reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+              "dialect_handling": "sql",
+              "raw_query": "SELECT * FROM subscribers LIMIT 100",
+              "result_summary": "list(len=2)",
+              "duration_ms": 0,
+              "success": true,
+              "failure_type": null
+            },
+            {
+              "merge_event": true,
+              "left_key": "customer_id",
+              "right_key": "subscriber_id",
+              "rows_before": 2,
+              "rows_after": 2,
+              "join_resolver_used": "utils.join_key_resolver.JoinKeyResolver"
+            }
+          ],
+          "used_databases": [
+            {
+              "database": "mongodb",
+              "reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+              "tool": "mongodb_aggregate_pipeline"
+            },
+            {
+              "database": "postgresql",
+              "reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+              "tool": "postgres_primary_sql"
+            }
+          ],
+          "predicted_queries": [
+            {
+              "database": "mongodb",
+              "dialect": "mongodb_aggregation",
+              "query": [
+                {
+                  "$limit": 100
+                }
+              ]
+            },
+            {
+              "database": "postgresql",
+              "dialect": "sql",
+              "query": "SELECT * FROM subscribers LIMIT 100"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "reg_009",
+      "question": "Count negative sentiment support ticket mentions across MongoDB and PostgreSQL context batch 7.",
+      "expected": {
+        "type": "equals",
+        "value": 1
+      },
+      "first_trial_correct": true,
+      "trial_accuracy": 1.0,
+      "trials": [
+        {
+          "trial": 1,
+          "correct": true,
+          "status": "success",
+          "answer": 1,
+          "confidence": 0.95,
+          "trace": [
+            {
+              "tool_used": "mongodb_aggregate_pipeline",
+              "selection_reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+              "dialect_handling": "mongodb_aggregation",
+              "raw_query": [
+                {
+                  "$limit": 100
+                },
+                {
+                  "$group": {
+                    "_id": null,
+                    "count": {
+                      "$sum": 1
+                    }
+                  }
+                }
+              ],
+              "result_summary": "list(len=2)",
+              "duration_ms": 0,
+              "success": true,
+              "failure_type": null
+            },
+            {
+              "tool_used": "postgres_primary_sql",
+              "selection_reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+              "dialect_handling": "sql",
+              "raw_query": "SELECT COUNT(*) AS count FROM subscribers",
+              "result_summary": "list(len=2)",
+              "duration_ms": 0,
+              "success": true,
+              "failure_type": null
+            },
+            {
+              "merge_event": true,
+              "left_key": "customer_id",
+              "right_key": "subscriber_id",
+              "rows_before": 2,
+              "rows_after": 2,
+              "join_resolver_used": "utils.join_key_resolver.JoinKeyResolver"
+            }
+          ],
+          "used_databases": [
+            {
+              "database": "mongodb",
+              "reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+              "tool": "mongodb_aggregate_pipeline"
+            },
+            {
+              "database": "postgresql",
+              "reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+              "tool": "postgres_primary_sql"
+            }
+          ],
+          "predicted_queries": [
+            {
+              "database": "mongodb",
+              "dialect": "mongodb_aggregation",
+              "query": [
+                {
+                  "$limit": 100
+                },
+                {
+                  "$group": {
+                    "_id": null,
+                    "count": {
+                      "$sum": 1
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "database": "postgresql",
+              "dialect": "sql",
+              "query": "SELECT COUNT(*) AS count FROM subscribers"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "reg_010",
+      "question": "Count all subscriber-ticket pairs using PostgreSQL and MongoDB batch 8.",
+      "expected": {
+        "type": "equals",
+        "value": 2
+      },
+      "first_trial_correct": true,
+      "trial_accuracy": 1.0,
+      "trials": [
+        {
+          "trial": 1,
+          "correct": true,
+          "status": "success",
+          "answer": 2,
+          "confidence": 0.95,
+          "trace": [
+            {
+              "tool_used": "mongodb_aggregate_pipeline",
+              "selection_reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+              "dialect_handling": "mongodb_aggregation",
+              "raw_query": [
+                {
+                  "$limit": 100
+                },
+                {
+                  "$group": {
+                    "_id": null,
+                    "count": {
+                      "$sum": 1
+                    }
+                  }
+                }
+              ],
+              "result_summary": "list(len=2)",
+              "duration_ms": 0,
+              "success": true,
+              "failure_type": null
+            },
+            {
+              "tool_used": "postgres_primary_sql",
+              "selection_reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+              "dialect_handling": "sql",
+              "raw_query": "SELECT COUNT(*) AS count FROM subscribers",
+              "result_summary": "list(len=2)",
+              "duration_ms": 0,
+              "success": true,
+              "failure_type": null
+            },
+            {
+              "merge_event": true,
+              "left_key": "customer_id",
+              "right_key": "subscriber_id",
+              "rows_before": 2,
+              "rows_after": 2,
+              "join_resolver_used": "utils.join_key_resolver.JoinKeyResolver"
+            }
+          ],
+          "used_databases": [
+            {
+              "database": "mongodb",
+              "reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+              "tool": "mongodb_aggregate_pipeline"
+            },
+            {
+              "database": "postgresql",
+              "reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+              "tool": "postgres_primary_sql"
+            }
+          ],
+          "predicted_queries": [
+            {
+              "database": "mongodb",
+              "dialect": "mongodb_aggregation",
+              "query": [
+                {
+                  "$limit": 100
+                },
+                {
+                  "$group": {
+                    "_id": null,
+                    "count": {
+                      "$sum": 1
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "database": "postgresql",
+              "dialect": "sql",
+              "query": "SELECT COUNT(*) AS count FROM subscribers"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "reg_011",
+      "question": "How many records exist when joining subscriber and ticket data across databases batch 9?",
+      "expected": {
+        "type": "equals",
+        "value": 2
+      },
+      "first_trial_correct": true,
+      "trial_accuracy": 1.0,
+      "trials": [
+        {
+          "trial": 1,
+          "correct": true,
+          "status": "success",
+          "answer": 2,
+          "confidence": 0.95,
+          "trace": [
+            {
+              "tool_used": "mongodb_aggregate_pipeline",
+              "selection_reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+              "dialect_handling": "mongodb_aggregation",
+              "raw_query": [
+                {
+                  "$limit": 100
+                }
+              ],
+              "result_summary": "list(len=2)",
+              "duration_ms": 0,
+              "success": true,
+              "failure_type": null
+            }
+          ],
+          "used_databases": [
+            {
+              "database": "mongodb",
+              "reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+              "tool": "mongodb_aggregate_pipeline"
+            }
+          ],
+          "predicted_queries": [
+            {
+              "database": "mongodb",
+              "dialect": "mongodb_aggregation",
+              "query": [
+                {
+                  "$limit": 100
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "reg_012",
+      "question": "Count negative sentiment issues from MongoDB tickets joined with PostgreSQL subscribers batch 9.",
+      "expected": {
+        "type": "equals",
+        "value": 1
+      },
+      "first_trial_correct": true,
+      "trial_accuracy": 1.0,
+      "trials": [
+        {
+          "trial": 1,
+          "correct": true,
+          "status": "success",
+          "answer": 1,
+          "confidence": 0.95,
+          "trace": [
+            {
+              "tool_used": "mongodb_aggregate_pipeline",
+              "selection_reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+              "dialect_handling": "mongodb_aggregation",
+              "raw_query": [
+                {
+                  "$limit": 100
+                },
+                {
+                  "$group": {
+                    "_id": null,
+                    "count": {
+                      "$sum": 1
+                    }
+                  }
+                }
+              ],
+              "result_summary": "list(len=2)",
+              "duration_ms": 0,
+              "success": true,
+              "failure_type": null
+            },
+            {
+              "tool_used": "postgres_primary_sql",
+              "selection_reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+              "dialect_handling": "sql",
+              "raw_query": "SELECT COUNT(*) AS count FROM subscribers",
+              "result_summary": "list(len=2)",
+              "duration_ms": 0,
+              "success": true,
+              "failure_type": null
+            },
+            {
+              "merge_event": true,
+              "left_key": "customer_id",
+              "right_key": "subscriber_id",
+              "rows_before": 2,
+              "rows_after": 2,
+              "join_resolver_used": "utils.join_key_resolver.JoinKeyResolver"
+            }
+          ],
+          "used_databases": [
+            {
+              "database": "mongodb",
+              "reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+              "tool": "mongodb_aggregate_pipeline"
+            },
+            {
+              "database": "postgresql",
+              "reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+              "tool": "postgres_primary_sql"
+            }
+          ],
+          "predicted_queries": [
+            {
+              "database": "mongodb",
+              "dialect": "mongodb_aggregation",
+              "query": [
+                {
+                  "$limit": 100
+                },
+                {
+                  "$group": {
+                    "_id": null,
+                    "count": {
+                      "$sum": 1
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "database": "postgresql",
+              "dialect": "sql",
+              "query": "SELECT COUNT(*) AS count FROM subscribers"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "regression_pass": true,
+  "failures": []
+}
