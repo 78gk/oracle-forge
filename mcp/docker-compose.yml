@@ -44,6 +44,46 @@ services:
         echo "MongoDB seed completed.";
     profiles: ["seed"]
 
+  postgres-seed:
+    image: python:3.12-slim
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Must use service hostname `postgres`, not localhost (host POSTGRES_DSN would break in-container).
+      POSTGRES_DSN: postgresql://postgres:postgres@postgres:5432/oracleforge
+      DUCKDB_PATH: /workspace/DataAgentBench/query_yelp/query_dataset/yelp_user.db
+    volumes:
+      - ..:/workspace
+    working_dir: /workspace
+    entrypoint: ["/bin/sh", "-lc"]
+    command:
+      - >
+        set -eu;
+        pip install --no-cache-dir -q "asyncpg>=0.29.0" "pymongo>=4.6.0" "duckdb>=0.10.0" &&
+        python scripts/seed_yelp_postgres.py
+    profiles: ["seed"]
+
+  # Add derived columns + business_category without DROP (for existing Docker volumes).
+  postgres-migrate:
+    image: python:3.12-slim
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      POSTGRES_DSN: postgresql://postgres:postgres@postgres:5432/oracleforge
+      DUCKDB_PATH: /workspace/DataAgentBench/query_yelp/query_dataset/yelp_user.db
+    volumes:
+      - ..:/workspace
+    working_dir: /workspace
+    entrypoint: ["/bin/sh", "-lc"]
+    command:
+      - >
+        set -eu;
+        pip install --no-cache-dir -q "asyncpg>=0.29.0" "pymongo>=4.6.0" "duckdb>=0.10.0" &&
+        python scripts/migrate_yelp_postgres_derived.py
+    profiles: ["seed"]
+
   toolbox:
     build:
       context: ..

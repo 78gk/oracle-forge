@@ -290,6 +290,20 @@ class MCPToolsClient:
             return {"value": result}
         return result
 
+    @staticmethod
+    def _records_from_tabular_dict(payload: Dict[str, Any]) -> Optional[List[Dict[str, Any]]]:
+        """MCP postgres-execute-sql often returns JSON {columns, rows} instead of row objects."""
+        cols = payload.get("columns")
+        rows = payload.get("rows")
+        if not isinstance(cols, list) or not isinstance(rows, list):
+            return None
+        out: List[Dict[str, Any]] = []
+        for row in rows:
+            if not isinstance(row, (list, tuple)):
+                continue
+            out.append(dict(zip(cols, row)))
+        return out
+
     def _parse_mcp_tool_result(self, result: Dict[str, Any]) -> Any:
         content = result.get("content")
         if not isinstance(content, list):
@@ -315,6 +329,9 @@ class MCPToolsClient:
         if len(parsed_items) == 1:
             single = parsed_items[0]
             if isinstance(single, dict):
+                tabular = self._records_from_tabular_dict(single)
+                if tabular is not None:
+                    return tabular
                 return [single]
             return single
         return parsed_items

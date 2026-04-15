@@ -16,8 +16,8 @@
 
 - review_id (TEXT, PK) - format: "xyz789abc123"
 - user_id (TEXT) - foreign key to user.user_id
-- business_id (TEXT) - foreign key to business.business_id
-- stars (INT) - 1 to 5
+- business_id (TEXT) - foreign key to business.business_id (map `businessid_N` ↔ `businessref_N` when joining to DuckDB)
+- stars (INT) - 1 to 5 (same semantic as DuckDB `rating`; PostgreSQL uses the name `stars`)
 - date (TEXT) - format: 'YYYY-MM-DD'
 - text (TEXT) - unstructured review content (requires extraction)
 

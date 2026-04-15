@@ -40,6 +40,14 @@ try {
         if ($LASTEXITCODE -ne 0) {
             throw "Failed to seed MongoDB from DAB Yelp dump."
         }
+
+        Write-Host "Seeding PostgreSQL (Yelp business + DuckDB review/user)..."
+        docker compose -f $composePath --profile seed run --rm postgres-seed
+        if ($LASTEXITCODE -ne 0) {
+            throw "Failed to seed PostgreSQL for Yelp."
+        }
+        Write-Host "Tip: If Postgres already had data and templates fail on missing columns, run additive migrate:"
+        Write-Host "  docker compose -f $ComposeFile --profile seed run --rm postgres-migrate"
     }
 
     Write-Host "Starting MCP Toolbox..."

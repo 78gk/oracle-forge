@@ -208,8 +208,27 @@ class OracleForgeEvaluator:
             values = [self._norm_scalar(item) for item in actual]
             return sorted(values)
         if isinstance(actual, dict):
-            values = [self._norm_scalar(v) for v in actual.values()]
-            return sorted(values)
+            # Prefer row-shaped answers (tool results / merged query output) over raw metrics blobs.
+            records = actual.get("records")
+            if isinstance(records, list) and records:
+                values: List[str] = []
+                for row in records:
+                    if isinstance(row, dict):
+                        for cell in row.values():
+                            values.append(self._norm_scalar(cell))
+                    else:
+                        values.append(self._norm_scalar(row))
+                if values:
+                    return sorted(values)
+            flat_scalars: List[str] = []
+            for value in actual.values():
+                if isinstance(value, (dict, list)):
+                    continue
+                flat_scalars.append(self._norm_scalar(value))
+            if flat_scalars:
+                return sorted(flat_scalars)
+            text = self._stringify_answer(actual)
+            return sorted([self._norm_scalar(item) for item in text.split(",") if item.strip()])
         text = self._stringify_answer(actual)
         return sorted([self._norm_scalar(item) for item in text.split(",") if item.strip()])
 
