@@ -4,9 +4,9 @@
 
 **Layer 1 - Schema & Metadata:** All table schemas, relationships, indexes. Loaded at session start, never evicted. For DAB: 12 datasets × 4 DB types.
 
-**Layer 2 - Institutional Knowledge:** Which tables are authoritative, data quality notes. Our kb/v2-domain/domain_terms/
+**Layer 2 - Institutional Knowledge:** Which tables are authoritative, data quality notes. Our kb/domain/domain_terms/
 
-**Layer 3 - Interaction Memory:** Corrections from previous queries. Our kb/v3-corrections/
+**Layer 3 - Interaction Memory:** Corrections from previous queries. Our kb/correction/
 
 **Layer 4 - Query Patterns:** Successful SQL/MongoDB patterns from prior runs.
 
@@ -17,8 +17,8 @@
 ## Minimum for Oracle Forge (3 layers that demonstrably work)
 
 **Layer A (Schema):** Load once per DB type used in session
-**Layer B (Institutional):** kb/v2-domain/joins + terms (always loaded)
-**Layer C (Correction / correction log):** kb/v3-corrections/failure_log.md (always loaded)
+**Layer B (Institutional):** kb/domain/joins + terms (always loaded)
+**Layer C (Correction / correction log):** kb/correction/failure_log.md (always loaded)
 
 **Success metric:** Agent resolves join key mismatch without being explicitly told.
 

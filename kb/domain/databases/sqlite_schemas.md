@@ -1,14 +1,14 @@
 
 ---
 
-## File: `kb/v2-domain/databases/sqlite_schemas.md`
+## File: `kb/domain/databases/sqlite_schemas.md`
 
 ```markdown
 # SQLite Schemas for DAB Datasets
 
 ## Transaction Logs Dataset
 
-**Table: transactions**
+### Table: transactions**
 - transaction_id (INTEGER, PK)
 - customer_id (INTEGER) - format: integer, no prefix
 - product_id (INTEGER)
@@ -17,7 +17,7 @@
 - transaction_date (TEXT) - ISO format 'YYYY-MM-DD'
 - store_location (TEXT)
 
-**Table: products**
+### Table: products**
 - product_id (INTEGER, PK)
 - product_name (TEXT)
 - category (TEXT)
@@ -25,7 +25,7 @@
 
 ## Inventory Dataset
 
-**Table: inventory**
+### Table: inventory**
 - inventory_id (INTEGER, PK)
 - product_id (INTEGER)
 - store_id (INTEGER)

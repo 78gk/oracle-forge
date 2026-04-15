@@ -1,0 +1,1037 @@
+{
+  "probe_count": 15,
+  "categories": [
+    "domain_knowledge_gaps",
+    "ill_formatted_keys",
+    "multi_db_routing"
+  ],
+  "passed_probes": 14,
+  "probe_validity": "FAIL",
+  "results": [
+    {
+      "id": "probe_001",
+      "category": "multi_db_routing",
+      "expected_failure_mode": "routing_to_single_db_only",
+      "passed": true,
+      "status": "success",
+      "answer": 2,
+      "trace": [
+        {
+          "tool_used": "mongodb_aggregate_pipeline",
+          "selection_reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+          "dialect_handling": "mongodb_aggregation",
+          "raw_query": [
+            {
+              "$limit": 100
+            },
+            {
+              "$group": {
+                "_id": null,
+                "count": {
+                  "$sum": 1
+                }
+              }
+            }
+          ],
+          "result_summary": "list(len=2)",
+          "duration_ms": 0,
+          "success": true,
+          "failure_type": null
+        },
+        {
+          "tool_used": "postgres_primary_sql",
+          "selection_reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+          "dialect_handling": "sql",
+          "raw_query": "SELECT COUNT(*) AS count FROM subscribers",
+          "result_summary": "list(len=2)",
+          "duration_ms": 0,
+          "success": true,
+          "failure_type": null
+        },
+        {
+          "merge_event": true,
+          "left_key": "customer_id",
+          "right_key": "subscriber_id",
+          "rows_before": 2,
+          "rows_after": 2,
+          "join_resolver_used": "utils.join_key_resolver.JoinKeyResolver"
+        }
+      ],
+      "used_databases": [
+        {
+          "database": "mongodb",
+          "reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+          "tool": "mongodb_aggregate_pipeline"
+        },
+        {
+          "database": "postgresql",
+          "reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+          "tool": "postgres_primary_sql"
+        }
+      ]
+    },
+    {
+      "id": "probe_002",
+      "category": "multi_db_routing",
+      "expected_failure_mode": "missing_cross_db_join",
+      "passed": true,
+      "status": "success",
+      "answer": 2,
+      "trace": [
+        {
+          "tool_used": "mongodb_aggregate_pipeline",
+          "selection_reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+          "dialect_handling": "mongodb_aggregation",
+          "raw_query": [
+            {
+              "$limit": 100
+            }
+          ],
+          "result_summary": "list(len=2)",
+          "duration_ms": 0,
+          "success": true,
+          "failure_type": null
+        }
+      ],
+      "used_databases": [
+        {
+          "database": "mongodb",
+          "reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+          "tool": "mongodb_aggregate_pipeline"
+        }
+      ]
+    },
+    {
+      "id": "probe_003",
+      "category": "multi_db_routing",
+      "expected_failure_mode": "router_tool_selection_conflict",
+      "passed": true,
+      "status": "success",
+      "answer": 2,
+      "trace": [
+        {
+          "tool_used": "mongodb_aggregate_pipeline",
+          "selection_reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+          "dialect_handling": "mongodb_aggregation",
+          "raw_query": [
+            {
+              "$limit": 100
+            },
+            {
+              "$group": {
+                "_id": null,
+                "count": {
+                  "$sum": 1
+                }
+              }
+            }
+          ],
+          "result_summary": "list(len=2)",
+          "duration_ms": 0,
+          "success": true,
+          "failure_type": null
+        },
+        {
+          "tool_used": "postgres_primary_sql",
+          "selection_reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+          "dialect_handling": "sql",
+          "raw_query": "SELECT COUNT(*) AS count FROM subscribers",
+          "result_summary": "list(len=2)",
+          "duration_ms": 0,
+          "success": true,
+          "failure_type": null
+        },
+        {
+          "merge_event": true,
+          "left_key": "customer_id",
+          "right_key": "subscriber_id",
+          "rows_before": 2,
+          "rows_after": 2,
+          "join_resolver_used": "utils.join_key_resolver.JoinKeyResolver"
+        }
+      ],
+      "used_databases": [
+        {
+          "database": "mongodb",
+          "reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+          "tool": "mongodb_aggregate_pipeline"
+        },
+        {
+          "database": "postgresql",
+          "reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+          "tool": "postgres_primary_sql"
+        }
+      ]
+    },
+    {
+      "id": "probe_004",
+      "category": "multi_db_routing",
+      "expected_failure_mode": "mongo_only_plan_without_pg_join",
+      "passed": true,
+      "status": "success",
+      "answer": 1,
+      "trace": [
+        {
+          "tool_used": "mongodb_aggregate_pipeline",
+          "selection_reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+          "dialect_handling": "mongodb_aggregation",
+          "raw_query": [
+            {
+              "$limit": 100
+            },
+            {
+              "$group": {
+                "_id": null,
+                "count": {
+                  "$sum": 1
+                }
+              }
+            }
+          ],
+          "result_summary": "list(len=2)",
+          "duration_ms": 0,
+          "success": true,
+          "failure_type": null
+        },
+        {
+          "tool_used": "postgres_primary_sql",
+          "selection_reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+          "dialect_handling": "sql",
+          "raw_query": "SELECT COUNT(*) AS count FROM subscribers",
+          "result_summary": "list(len=2)",
+          "duration_ms": 0,
+          "success": true,
+          "failure_type": null
+        },
+        {
+          "merge_event": true,
+          "left_key": "customer_id",
+          "right_key": "subscriber_id",
+          "rows_before": 2,
+          "rows_after": 2,
+          "join_resolver_used": "utils.join_key_resolver.JoinKeyResolver"
+        }
+      ],
+      "used_databases": [
+        {
+          "database": "mongodb",
+          "reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+          "tool": "mongodb_aggregate_pipeline"
+        },
+        {
+          "database": "postgresql",
+          "reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+          "tool": "postgres_primary_sql"
+        }
+      ]
+    },
+    {
+      "id": "probe_005",
+      "category": "multi_db_routing",
+      "expected_failure_mode": "incorrect_worker_fanout",
+      "passed": true,
+      "status": "success",
+      "answer": 1,
+      "trace": [
+        {
+          "tool_used": "mongodb_aggregate_pipeline",
+          "selection_reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+          "dialect_handling": "mongodb_aggregation",
+          "raw_query": [
+            {
+              "$limit": 100
+            }
+          ],
+          "result_summary": "list(len=2)",
+          "duration_ms": 0,
+          "success": true,
+          "failure_type": null
+        },
+        {
+          "tool_used": "postgres_primary_sql",
+          "selection_reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+          "dialect_handling": "sql",
+          "raw_query": "SELECT * FROM subscribers LIMIT 100",
+          "result_summary": "list(len=2)",
+          "duration_ms": 0,
+          "success": true,
+          "failure_type": null
+        },
+        {
+          "merge_event": true,
+          "left_key": "customer_id",
+          "right_key": "subscriber_id",
+          "rows_before": 2,
+          "rows_after": 2,
+          "join_resolver_used": "utils.join_key_resolver.JoinKeyResolver"
+        }
+      ],
+      "used_databases": [
+        {
+          "database": "mongodb",
+          "reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+          "tool": "mongodb_aggregate_pipeline"
+        },
+        {
+          "database": "postgresql",
+          "reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+          "tool": "postgres_primary_sql"
+        }
+      ]
+    },
+    {
+      "id": "probe_006",
+      "category": "ill_formatted_keys",
+      "expected_failure_mode": "cust_prefix_join_mismatch",
+      "passed": true,
+      "status": "success",
+      "answer": 2,
+      "trace": [
+        {
+          "tool_used": "mongodb_aggregate_pipeline",
+          "selection_reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+          "dialect_handling": "mongodb_aggregation",
+          "raw_query": [
+            {
+              "$limit": 100
+            },
+            {
+              "$group": {
+                "_id": null,
+                "count": {
+                  "$sum": 1
+                }
+              }
+            }
+          ],
+          "result_summary": "list(len=2)",
+          "duration_ms": 0,
+          "success": true,
+          "failure_type": null
+        },
+        {
+          "tool_used": "postgres_primary_sql",
+          "selection_reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+          "dialect_handling": "sql",
+          "raw_query": "SELECT COUNT(*) AS count FROM subscribers",
+          "result_summary": "list(len=2)",
+          "duration_ms": 0,
+          "success": true,
+          "failure_type": null
+        },
+        {
+          "merge_event": true,
+          "left_key": "customer_id",
+          "right_key": "subscriber_id",
+          "rows_before": 2,
+          "rows_after": 2,
+          "join_resolver_used": "utils.join_key_resolver.JoinKeyResolver"
+        }
+      ],
+      "used_databases": [
+        {
+          "database": "mongodb",
+          "reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+          "tool": "mongodb_aggregate_pipeline"
+        },
+        {
+          "database": "postgresql",
+          "reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+          "tool": "postgres_primary_sql"
+        }
+      ]
+    },
+    {
+      "id": "probe_007",
+      "category": "ill_formatted_keys",
+      "expected_failure_mode": "string_int_key_normalization_failure",
+      "passed": true,
+      "status": "success",
+      "answer": 2,
+      "trace": [
+        {
+          "tool_used": "mongodb_aggregate_pipeline",
+          "selection_reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+          "dialect_handling": "mongodb_aggregation",
+          "raw_query": [
+            {
+              "$limit": 100
+            },
+            {
+              "$group": {
+                "_id": null,
+                "count": {
+                  "$sum": 1
+                }
+              }
+            }
+          ],
+          "result_summary": "list(len=2)",
+          "duration_ms": 2,
+          "success": true,
+          "failure_type": null
+        },
+        {
+          "tool_used": "postgres_primary_sql",
+          "selection_reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+          "dialect_handling": "sql",
+          "raw_query": "SELECT COUNT(*) AS count FROM subscribers",
+          "result_summary": "list(len=2)",
+          "duration_ms": 0,
+          "success": true,
+          "failure_type": null
+        },
+        {
+          "merge_event": true,
+          "left_key": "customer_id",
+          "right_key": "subscriber_id",
+          "rows_before": 2,
+          "rows_after": 2,
+          "join_resolver_used": "utils.join_key_resolver.JoinKeyResolver"
+        }
+      ],
+      "used_databases": [
+        {
+          "database": "mongodb",
+          "reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+          "tool": "mongodb_aggregate_pipeline"
+        },
+        {
+          "database": "postgresql",
+          "reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+          "tool": "postgres_primary_sql"
+        }
+      ]
+    },
+    {
+      "id": "probe_008",
+      "category": "ill_formatted_keys",
+      "expected_failure_mode": "join_key_canonicalization_missing",
+      "passed": true,
+      "status": "success",
+      "answer": 2,
+      "trace": [
+        {
+          "tool_used": "mongodb_aggregate_pipeline",
+          "selection_reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+          "dialect_handling": "mongodb_aggregation",
+          "raw_query": [
+            {
+              "$limit": 100
+            }
+          ],
+          "result_summary": "list(len=2)",
+          "duration_ms": 0,
+          "success": true,
+          "failure_type": null
+        }
+      ],
+      "used_databases": [
+        {
+          "database": "mongodb",
+          "reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+          "tool": "mongodb_aggregate_pipeline"
+        }
+      ]
+    },
+    {
+      "id": "probe_009",
+      "category": "ill_formatted_keys",
+      "expected_failure_mode": "partial_join_drop_due_to_format",
+      "passed": true,
+      "status": "success",
+      "answer": 2,
+      "trace": [
+        {
+          "tool_used": "mongodb_aggregate_pipeline",
+          "selection_reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+          "dialect_handling": "mongodb_aggregation",
+          "raw_query": [
+            {
+              "$limit": 100
+            },
+            {
+              "$group": {
+                "_id": null,
+                "count": {
+                  "$sum": 1
+                }
+              }
+            }
+          ],
+          "result_summary": "list(len=2)",
+          "duration_ms": 0,
+          "success": true,
+          "failure_type": null
+        },
+        {
+          "tool_used": "postgres_primary_sql",
+          "selection_reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+          "dialect_handling": "sql",
+          "raw_query": "SELECT COUNT(*) AS count FROM subscribers",
+          "result_summary": "list(len=2)",
+          "duration_ms": 0,
+          "success": true,
+          "failure_type": null
+        },
+        {
+          "merge_event": true,
+          "left_key": "customer_id",
+          "right_key": "subscriber_id",
+          "rows_before": 2,
+          "rows_after": 2,
+          "join_resolver_used": "utils.join_key_resolver.JoinKeyResolver"
+        }
+      ],
+      "used_databases": [
+        {
+          "database": "mongodb",
+          "reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+          "tool": "mongodb_aggregate_pipeline"
+        },
+        {
+          "database": "postgresql",
+          "reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+          "tool": "postgres_primary_sql"
+        }
+      ]
+    },
+    {
+      "id": "probe_010",
+      "category": "ill_formatted_keys",
+      "expected_failure_mode": "normalized_join_then_extraction_failure",
+      "passed": true,
+      "status": "success",
+      "answer": 1,
+      "trace": [
+        {
+          "tool_used": "mongodb_aggregate_pipeline",
+          "selection_reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+          "dialect_handling": "mongodb_aggregation",
+          "raw_query": [
+            {
+              "$limit": 100
+            },
+            {
+              "$group": {
+                "_id": null,
+                "count": {
+                  "$sum": 1
+                }
+              }
+            }
+          ],
+          "result_summary": "list(len=2)",
+          "duration_ms": 0,
+          "success": true,
+          "failure_type": null
+        }
+      ],
+      "used_databases": [
+        {
+          "database": "mongodb",
+          "reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+          "tool": "mongodb_aggregate_pipeline"
+        }
+      ]
+    },
+    {
+      "id": "probe_011",
+      "category": "domain_knowledge_gaps",
+      "expected_failure_mode": "high_value_definition_not_applied",
+      "passed": true,
+      "status": "success",
+      "answer": 1,
+      "trace": [
+        {
+          "tool_used": "mongodb_aggregate_pipeline",
+          "selection_reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+          "dialect_handling": "mongodb_aggregation",
+          "raw_query": [
+            {
+              "$limit": 100
+            }
+          ],
+          "result_summary": "list(len=2)",
+          "duration_ms": 0,
+          "success": true,
+          "failure_type": null
+        },
+        {
+          "tool_used": "postgres_primary_sql",
+          "selection_reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+          "dialect_handling": "sql",
+          "raw_query": "SELECT * FROM subscribers LIMIT 100",
+          "result_summary": "list(len=2)",
+          "duration_ms": 0,
+          "success": true,
+          "failure_type": null
+        },
+        {
+          "merge_event": true,
+          "left_key": "customer_id",
+          "right_key": "subscriber_id",
+          "rows_before": 2,
+          "rows_after": 2,
+          "join_resolver_used": "utils.join_key_resolver.JoinKeyResolver"
+        }
+      ],
+      "used_databases": [
+        {
+          "database": "mongodb",
+          "reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+          "tool": "mongodb_aggregate_pipeline"
+        },
+        {
+          "database": "postgresql",
+          "reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+          "tool": "postgres_primary_sql"
+        }
+      ]
+    },
+    {
+      "id": "probe_012",
+      "category": "domain_knowledge_gaps",
+      "expected_failure_mode": "sentiment_mapping_not_applied",
+      "passed": true,
+      "status": "success",
+      "answer": 1,
+      "trace": [
+        {
+          "tool_used": "mongodb_aggregate_pipeline",
+          "selection_reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+          "dialect_handling": "mongodb_aggregation",
+          "raw_query": [
+            {
+              "$limit": 100
+            },
+            {
+              "$group": {
+                "_id": null,
+                "count": {
+                  "$sum": 1
+                }
+              }
+            }
+          ],
+          "result_summary": "list(len=2)",
+          "duration_ms": 0,
+          "success": true,
+          "failure_type": null
+        },
+        {
+          "tool_used": "postgres_primary_sql",
+          "selection_reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+          "dialect_handling": "sql",
+          "raw_query": "SELECT COUNT(*) AS count FROM subscribers",
+          "result_summary": "list(len=2)",
+          "duration_ms": 0,
+          "success": true,
+          "failure_type": null
+        },
+        {
+          "merge_event": true,
+          "left_key": "customer_id",
+          "right_key": "subscriber_id",
+          "rows_before": 2,
+          "rows_after": 2,
+          "join_resolver_used": "utils.join_key_resolver.JoinKeyResolver"
+        }
+      ],
+      "used_databases": [
+        {
+          "database": "mongodb",
+          "reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+          "tool": "mongodb_aggregate_pipeline"
+        },
+        {
+          "database": "postgresql",
+          "reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+          "tool": "postgres_primary_sql"
+        }
+      ]
+    },
+    {
+      "id": "probe_013",
+      "category": "domain_knowledge_gaps",
+      "expected_failure_mode": "institutional_context_not_loaded",
+      "passed": true,
+      "status": "success",
+      "answer": 2,
+      "trace": [
+        {
+          "tool_used": "mongodb_aggregate_pipeline",
+          "selection_reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+          "dialect_handling": "mongodb_aggregation",
+          "raw_query": [
+            {
+              "$limit": 100
+            },
+            {
+              "$group": {
+                "_id": null,
+                "count": {
+                  "$sum": 1
+                }
+              }
+            }
+          ],
+          "result_summary": "list(len=2)",
+          "duration_ms": 0,
+          "success": true,
+          "failure_type": null
+        },
+        {
+          "tool_used": "postgres_primary_sql",
+          "selection_reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+          "dialect_handling": "sql",
+          "raw_query": "SELECT COUNT(*) AS count FROM subscribers",
+          "result_summary": "list(len=2)",
+          "duration_ms": 0,
+          "success": true,
+          "failure_type": null
+        },
+        {
+          "merge_event": true,
+          "left_key": "customer_id",
+          "right_key": "subscriber_id",
+          "rows_before": 2,
+          "rows_after": 2,
+          "join_resolver_used": "utils.join_key_resolver.JoinKeyResolver"
+        }
+      ],
+      "used_databases": [
+        {
+          "database": "mongodb",
+          "reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+          "tool": "mongodb_aggregate_pipeline"
+        },
+        {
+          "database": "postgresql",
+          "reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+          "tool": "postgres_primary_sql"
+        }
+      ]
+    },
+    {
+      "id": "probe_014",
+      "category": "domain_knowledge_gaps",
+      "expected_failure_mode": "extraction_before_count_missing",
+      "passed": true,
+      "status": "success",
+      "answer": 1,
+      "trace": [
+        {
+          "tool_used": "mongodb_aggregate_pipeline",
+          "selection_reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+          "dialect_handling": "mongodb_aggregation",
+          "raw_query": [
+            {
+              "$limit": 100
+            },
+            {
+              "$group": {
+                "_id": null,
+                "count": {
+                  "$sum": 1
+                }
+              }
+            }
+          ],
+          "result_summary": "list(len=2)",
+          "duration_ms": 0,
+          "success": true,
+          "failure_type": null
+        },
+        {
+          "tool_used": "postgres_primary_sql",
+          "selection_reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+          "dialect_handling": "sql",
+          "raw_query": "SELECT COUNT(*) AS count FROM subscribers",
+          "result_summary": "list(len=2)",
+          "duration_ms": 0,
+          "success": true,
+          "failure_type": null
+        },
+        {
+          "merge_event": true,
+          "left_key": "customer_id",
+          "right_key": "subscriber_id",
+          "rows_before": 2,
+          "rows_after": 2,
+          "join_resolver_used": "utils.join_key_resolver.JoinKeyResolver"
+        }
+      ],
+      "used_databases": [
+        {
+          "database": "mongodb",
+          "reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+          "tool": "mongodb_aggregate_pipeline"
+        },
+        {
+          "database": "postgresql",
+          "reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+          "tool": "postgres_primary_sql"
+        }
+      ]
+    },
+    {
+      "id": "probe_015",
+      "category": "domain_knowledge_gaps",
+      "expected_failure_mode": "no_failure_classification",
+      "passed": false,
+      "status": "failure",
+      "answer": null,
+      "trace": [
+        {
+          "tool_used": "mongodb_aggregate_pipeline",
+          "selection_reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+          "dialect_handling": "mongodb_aggregation",
+          "raw_query": [
+            {
+              "$limit": 100
+            }
+          ],
+          "result_summary": "Forced mock error for validation path",
+          "duration_ms": 0,
+          "success": false,
+          "failure_type": "unknown_error"
+        },
+        {
+          "tool_used": "mongodb_aggregate_pipeline",
+          "selection_reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+          "dialect_handling": "mongodb_aggregation",
+          "raw_query": [
+            {
+              "$limit": 100
+            }
+          ],
+          "result_summary": "Forced mock error for validation path",
+          "duration_ms": 0,
+          "success": false,
+          "failure_type": "unknown_error"
+        },
+        {
+          "tool_used": "mongodb_aggregate_pipeline",
+          "selection_reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+          "dialect_handling": "mongodb_aggregation",
+          "raw_query": [
+            {
+              "$limit": 100
+            }
+          ],
+          "result_summary": "Forced mock error for validation path",
+          "duration_ms": 0,
+          "success": false,
+          "failure_type": "unknown_error"
+        },
+        {
+          "tool_used": "postgres_primary_sql",
+          "selection_reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+          "dialect_handling": "sql",
+          "raw_query": "SELECT * FROM subscribers LIMIT 100",
+          "result_summary": "Forced mock error for validation path",
+          "duration_ms": 0,
+          "success": false,
+          "failure_type": "unknown_error"
+        },
+        {
+          "tool_used": "postgres_primary_sql",
+          "selection_reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+          "dialect_handling": "sql",
+          "raw_query": "SELECT * FROM subscribers LIMIT 100",
+          "result_summary": "Forced mock error for validation path",
+          "duration_ms": 0,
+          "success": false,
+          "failure_type": "unknown_error"
+        },
+        {
+          "tool_used": "postgres_primary_sql",
+          "selection_reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+          "dialect_handling": "sql",
+          "raw_query": "SELECT * FROM subscribers LIMIT 100",
+          "result_summary": "Forced mock error for validation path",
+          "duration_ms": 0,
+          "success": false,
+          "failure_type": "unknown_error"
+        },
+        {
+          "tool_used": "mongodb_aggregate_pipeline",
+          "selection_reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+          "dialect_handling": "mongodb_aggregation",
+          "raw_query": [
+            {
+              "$limit": 100
+            }
+          ],
+          "result_summary": "Forced mock error for validation path",
+          "duration_ms": 0,
+          "success": false,
+          "failure_type": "unknown_error"
+        },
+        {
+          "tool_used": "mongodb_aggregate_pipeline",
+          "selection_reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+          "dialect_handling": "mongodb_aggregation",
+          "raw_query": [
+            {
+              "$limit": 100
+            }
+          ],
+          "result_summary": "Forced mock error for validation path",
+          "duration_ms": 0,
+          "success": false,
+          "failure_type": "unknown_error"
+        },
+        {
+          "tool_used": "mongodb_aggregate_pipeline",
+          "selection_reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+          "dialect_handling": "mongodb_aggregation",
+          "raw_query": [
+            {
+              "$limit": 100
+            }
+          ],
+          "result_summary": "Forced mock error for validation path",
+          "duration_ms": 0,
+          "success": false,
+          "failure_type": "unknown_error"
+        },
+        {
+          "tool_used": "postgres_primary_sql",
+          "selection_reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+          "dialect_handling": "sql",
+          "raw_query": "SELECT * FROM subscribers LIMIT 100",
+          "result_summary": "Forced mock error for validation path",
+          "duration_ms": 0,
+          "success": false,
+          "failure_type": "unknown_error"
+        },
+        {
+          "tool_used": "postgres_primary_sql",
+          "selection_reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+          "dialect_handling": "sql",
+          "raw_query": "SELECT * FROM subscribers LIMIT 100",
+          "result_summary": "Forced mock error for validation path",
+          "duration_ms": 0,
+          "success": false,
+          "failure_type": "unknown_error"
+        },
+        {
+          "tool_used": "postgres_primary_sql",
+          "selection_reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+          "dialect_handling": "sql",
+          "raw_query": "SELECT * FROM subscribers LIMIT 100",
+          "result_summary": "Forced mock error for validation path",
+          "duration_ms": 0,
+          "success": false,
+          "failure_type": "unknown_error"
+        },
+        {
+          "tool_used": "mongodb_aggregate_pipeline",
+          "selection_reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+          "dialect_handling": "mongodb_aggregation",
+          "raw_query": [
+            {
+              "$limit": 100
+            }
+          ],
+          "result_summary": "Forced mock error for validation path",
+          "duration_ms": 0,
+          "success": false,
+          "failure_type": "unknown_error"
+        },
+        {
+          "tool_used": "mongodb_aggregate_pipeline",
+          "selection_reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+          "dialect_handling": "mongodb_aggregation",
+          "raw_query": [
+            {
+              "$limit": 100
+            }
+          ],
+          "result_summary": "Forced mock error for validation path",
+          "duration_ms": 0,
+          "success": false,
+          "failure_type": "unknown_error"
+        },
+        {
+          "tool_used": "mongodb_aggregate_pipeline",
+          "selection_reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+          "dialect_handling": "mongodb_aggregation",
+          "raw_query": [
+            {
+              "$limit": 100
+            }
+          ],
+          "result_summary": "Forced mock error for validation path",
+          "duration_ms": 0,
+          "success": false,
+          "failure_type": "unknown_error"
+        },
+        {
+          "tool_used": "postgres_primary_sql",
+          "selection_reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+          "dialect_handling": "sql",
+          "raw_query": "SELECT * FROM subscribers LIMIT 100",
+          "result_summary": "Forced mock error for validation path",
+          "duration_ms": 0,
+          "success": false,
+          "failure_type": "unknown_error"
+        },
+        {
+          "tool_used": "postgres_primary_sql",
+          "selection_reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+          "dialect_handling": "sql",
+          "raw_query": "SELECT * FROM subscribers LIMIT 100",
+          "result_summary": "Forced mock error for validation path",
+          "duration_ms": 0,
+          "success": false,
+          "failure_type": "unknown_error"
+        },
+        {
+          "tool_used": "postgres_primary_sql",
+          "selection_reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+          "dialect_handling": "sql",
+          "raw_query": "SELECT * FROM subscribers LIMIT 100",
+          "result_summary": "Forced mock error for validation path",
+          "duration_ms": 0,
+          "success": false,
+          "failure_type": "unknown_error"
+        }
+      ],
+      "used_databases": [
+        {
+          "database": "mongodb",
+          "reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+          "tool": "mongodb_aggregate_pipeline"
+        },
+        {
+          "database": "postgresql",
+          "reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+          "tool": "postgres_primary_sql"
+        },
+        {
+          "database": "mongodb",
+          "reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+          "tool": "mongodb_aggregate_pipeline"
+        },
+        {
+          "database": "postgresql",
+          "reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+          "tool": "postgres_primary_sql"
+        },
+        {
+          "database": "mongodb",
+          "reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+          "tool": "mongodb_aggregate_pipeline"
+        },
+        {
+          "database": "postgresql",
+          "reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+          "tool": "postgres_primary_sql"
+        }
+      ]
+    }
+  ]
+}

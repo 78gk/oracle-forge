@@ -1,0 +1,57 @@
+sources:
+  postgres_primary:
+    kind: postgres
+    host: postgres
+    port: 5432
+    database: oracleforge
+    user: postgres
+    password: postgres
+
+  mongodb_primary:
+    kind: mongodb
+    uri: ${MONGODB_URI}
+
+  sqlite_analytics:
+    kind: sqlite
+    database: ${SQLITE_PATH}
+
+
+tools:
+  postgres_sql_query:
+    kind: postgres-execute-sql
+    source: postgres_primary
+    description: Execute SQL against PostgreSQL.
+
+  sqlite_sql_query:
+    kind: sqlite-execute-sql
+    source: sqlite_analytics
+    description: Execute SQL against SQLite.
+
+
+  mongodb_aggregate_business:
+    kind: mongodb-aggregate
+    source: mongodb_primary
+    description: Execute MongoDB aggregation pipelines for the business collection.
+    database: ${MONGODB_DATABASE}
+    collection: business
+    readOnly: true
+    pipelinePayload: |
+      {{.pipeline_json}}
+    pipelineParams:
+      - name: pipeline_json
+        type: string
+        description: MongoDB aggregation pipeline as a JSON array string.
+
+  mongodb_aggregate_checkin:
+    kind: mongodb-aggregate
+    source: mongodb_primary
+    description: Execute MongoDB aggregation pipelines for the checkin collection.
+    database: ${MONGODB_DATABASE}
+    collection: checkin
+    readOnly: true
+    pipelinePayload: |
+      {{.pipeline_json}}
+    pipelineParams:
+      - name: pipeline_json
+        type: string
+        description: MongoDB aggregation pipeline as a JSON array string.

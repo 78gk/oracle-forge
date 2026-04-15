@@ -76,12 +76,12 @@
     {
       "document": "architecture/evaluation_harness_schema.md",
       "passed": true,
-      "llm_answer": "pass@1 is calculated as (correct first answers) / (total queries). The document also mentions that there should be a minimum of 50 trials per query.",
+      "llm_answer": "pass@1 is calculated as the number of correct first answers divided by the total number of queries. The document also mentions that there should be a minimum of 50 trials per query.",
       "error": null,
       "matched_keywords": [
         "correct first answers",
-        "total queries",
-        "50 trials"
+        "queries",
+        "minimum"
       ],
       "missing_keywords": [],
       "match_rate": 1.0
@@ -139,7 +139,7 @@
     {
       "document": "domain/joins/join_key_mappings.md",
       "passed": true,
-      "llm_answer": "To join PostgreSQL subscriber_id to MongoDB, use the `resolve_join_key` function to apply the transformation `f\"CUST-{subscriber_id}\"`. This will convert the integer subscriber_id in PostgreSQL to a string in the format \"CUST-1234567\" that matches the MongoDB format.",
+      "llm_answer": "To join PostgreSQL subscriber_id to MongoDB, use the `resolve_join_key` function to apply the transformation `f\"CUST-{subscriber_id}\"`. This will convert the integer subscriber_id in PostgreSQL to a string in the format \"CUST-{subscriber_id}\" that matches the format in MongoDB.",
       "error": null,
       "matched_keywords": [
         "resolve_join_key",
@@ -152,7 +152,7 @@
     {
       "document": "domain/joins/cross_db_join_patterns.md",
       "passed": true,
-      "llm_answer": "The steps for PostgreSQL to MongoDB join are:\n1. Query PostgreSQL for customer_ids\n2. Transform each ID: f\"CUST-{customer_id}\"\n3. Query MongoDB with transformed IDs\n4. Merge results on transformed key",
+      "llm_answer": "The steps for PostgreSQL to MongoDB join are:\n1. Query PostgreSQL first for customer_ids.\n2. Transform each ID: f\"CUST-{customer_id}\"\n3. Query MongoDB with transformed IDs\n4. Merge results on transformed key",
       "error": null,
       "matched_keywords": [
         "transform",
@@ -180,7 +180,7 @@
     {
       "document": "domain/unstructured/sentiment_mapping.md",
       "passed": true,
-      "llm_answer": "According to the document, negation affects sentiment classification in the following way: If \"not\" precedes an indicator, the sentiment is flipped. For example, \"not good\" is classified as negative, and \"not bad\" is classified as non-negative.",
+      "llm_answer": "According to the document, negation affects sentiment classification in the following way: If \"not\" precedes an indicator, the sentiment is flipped. For example, \"not good\" is classified as negative, and \"not bad\" is classified as non-negative. Additionally, \"couldn't be better\" is an example of a double negative that is classified as positive.",
       "error": null,
       "matched_keywords": [
         "not good",
@@ -218,7 +218,7 @@
     {
       "document": "correction/failure_by_category.md",
       "passed": true,
-      "llm_answer": "DAB's four failure categories are:\n\n1. Category 1: Multi-Database Routing Failure\n2. Category 2: Ill-Formatted Join Key Mismatch\n3. Category 3: Unstructured Text Extraction Failure\n4. Category 4: Domain Knowledge Gap",
+      "llm_answer": "DAB's four failure categories are:\n\n1. Multi-Database Routing Failure (Category 1)\n2. Ill-Formatted Join Key Mismatch (Category 2)\n3. Unstructured Text Extraction Failure (Category 3)\n4. Domain Knowledge Gap (Category 4)",
       "error": null,
       "matched_keywords": [
         "Multi-Database",
@@ -244,7 +244,7 @@
     {
       "document": "correction/regression_prevention.md",
       "passed": true,
-      "llm_answer": "If regression test fails, the following steps are taken: \n1. Revert the change immediately\n2. Log failure to failure_log.md\n3. Do not deploy until all regression tests pass\n4. Update the file with new failure mode.",
+      "llm_answer": "If regression test fails, the following steps are taken: \n1. Revert the change immediately\n2. Log failure to failure_log.md\n3. Do not deploy until all regression tests pass\n4. Update the file with the new failure mode.",
       "error": null,
       "matched_keywords": [
         "Revert",
@@ -269,7 +269,7 @@
     {
       "document": "evaluation/submission_format.md",
       "passed": true,
-      "llm_answer": "The files required for DAB submission are:\n1. `submission/team_name_results.json` (the results JSON file)\n2. `AGENT.md` (architecture description)",
+      "llm_answer": "The files required for DAB submission are: \n1. `submission/team_name_results.json` (the results JSON file) \n2. `AGENT.md` (architecture description)",
       "error": null,
       "matched_keywords": [
         "results JSON",
@@ -279,6 +279,6 @@
       "match_rate": 1.0
     }
   ],
-  "timestamp": "2026-04-10T23:17:54.824485",
+  "timestamp": "2026-04-12T15:44:52.654206",
   "model": "llama-3.3-70b-versatile"
 }

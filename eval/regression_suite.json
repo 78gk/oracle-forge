@@ -1,0 +1,16 @@
+{
+  "queries": [
+    {"id":"reg_001","question":"Count subscribers with support tickets across PostgreSQL and MongoDB.","available_databases":["postgresql","mongodb"],"schema_info":{},"expected":{"type":"equals","value":2}},
+    {"id":"reg_002","question":"How many high-value customers have tickets across PostgreSQL and MongoDB?","available_databases":["postgresql","mongodb"],"schema_info":{},"expected":{"type":"equals","value":1}},
+    {"id":"reg_003","question":"Count negative sentiment issues from MongoDB tickets joined with PostgreSQL subscribers.","available_databases":["postgresql","mongodb"],"schema_info":{},"expected":{"type":"equals","value":1}},
+    {"id":"reg_004","question":"Count all subscriber-ticket pairs using PostgreSQL and MongoDB.","available_databases":["postgresql","mongodb"],"schema_info":{},"expected":{"type":"equals","value":2}},
+    {"id":"reg_005","question":"How many records exist when joining subscriber and ticket data across databases?","available_databases":["postgresql","mongodb"],"schema_info":{},"expected":{"type":"equals","value":2}},
+    {"id":"reg_006","question":"Count negative sentiment support ticket mentions across MongoDB and PostgreSQL context.","available_databases":["postgresql","mongodb"],"schema_info":{},"expected":{"type":"equals","value":1}},
+    {"id":"reg_007","question":"Count subscribers with support tickets across PostgreSQL and MongoDB batch 5.","available_databases":["postgresql","mongodb"],"schema_info":{},"expected":{"type":"equals","value":2}},
+    {"id":"reg_008","question":"How many high-value customers have tickets across PostgreSQL and MongoDB batch 6?","available_databases":["postgresql","mongodb"],"schema_info":{},"expected":{"type":"equals","value":1}},
+    {"id":"reg_009","question":"Count negative sentiment support ticket mentions across MongoDB and PostgreSQL context batch 7.","available_databases":["postgresql","mongodb"],"schema_info":{},"expected":{"type":"equals","value":1}},
+    {"id":"reg_010","question":"Count all subscriber-ticket pairs using PostgreSQL and MongoDB batch 8.","available_databases":["postgresql","mongodb"],"schema_info":{},"expected":{"type":"equals","value":2}},
+    {"id":"reg_011","question":"How many records exist when joining subscriber and ticket data across databases batch 9?","available_databases":["postgresql","mongodb"],"schema_info":{},"expected":{"type":"equals","value":2}},
+    {"id":"reg_012","question":"Count negative sentiment issues from MongoDB tickets joined with PostgreSQL subscribers batch 9.","available_databases":["postgresql","mongodb"],"schema_info":{},"expected":{"type":"equals","value":1}}
+  ]
+}

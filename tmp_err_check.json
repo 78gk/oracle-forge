@@ -1,0 +1,1 @@
+{"jsonrpc":"2.0","id":"err-check","method":"tools/call","params":{"name":"sqlite_sql_query","arguments":{"sql":"SELECT * FROM sales_fact LIMIT 1"}}}

@@ -1,7 +1,7 @@
 
 ---
 
-## File: `kb/v2-domain/joins/cross_db_join_patterns.md`
+## File: `kb/domain/joins/cross_db_join_patterns.md`
 
 ```markdown
 # Cross-Database Join Patterns
@@ -11,7 +11,7 @@
 **Scenario:** Join customer transactions (PG) with support tickets (Mongo)
 
 **Steps:**
-1. Query PostgreSQL for customer_ids
+1. **ALWAYS start with PostgreSQL (primary source of truth — never reverse this order, see failure Q089).** Query PostgreSQL first for customer_ids.
 2. Transform each ID: f"CUST-{customer_id}"
 3. Query MongoDB with transformed IDs
 4. Merge results on transformed key

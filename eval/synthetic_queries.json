@@ -1,0 +1,59 @@
+{
+  "queries": [
+    {
+      "id": "syn_001",
+      "question": "How many high-value customers have support tickets across PostgreSQL and MongoDB?",
+      "available_databases": ["postgresql", "mongodb", "sqlite", "duckdb"],
+      "required_databases": ["postgresql", "mongodb"],
+      "schema_info": {},
+      "expected": {
+        "type": "equals",
+        "value": 1
+      }
+    },
+    {
+      "id": "syn_002",
+      "question": "Count negative sentiment support tickets from MongoDB issue descriptions.",
+      "available_databases": ["postgresql", "mongodb", "sqlite", "duckdb"],
+      "required_databases": ["mongodb"],
+      "schema_info": {},
+      "expected": {
+        "type": "equals",
+        "value": 1
+      }
+    },
+    {
+      "id": "syn_003",
+      "question": "What is the total sales value from DuckDB analytics?",
+      "available_databases": ["postgresql", "mongodb", "sqlite", "duckdb"],
+      "required_databases": ["duckdb"],
+      "schema_info": {},
+      "expected": {
+        "type": "equals",
+        "value": 1500.0
+      }
+    },
+    {
+      "id": "syn_004",
+      "question": "How many transaction records are available in SQLite?",
+      "available_databases": ["postgresql", "mongodb", "sqlite", "duckdb"],
+      "required_databases": ["sqlite"],
+      "schema_info": {},
+      "expected": {
+        "type": "equals",
+        "value": 2
+      }
+    },
+    {
+      "id": "syn_005",
+      "question": "Join PostgreSQL subscribers with MongoDB tickets and return count.",
+      "available_databases": ["postgresql", "mongodb", "sqlite", "duckdb"],
+      "required_databases": ["postgresql", "mongodb"],
+      "schema_info": {},
+      "expected": {
+        "type": "equals",
+        "value": 2
+      }
+    }
+  ]
+}

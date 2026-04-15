@@ -1,0 +1,16 @@
+{
+  "team_name": "Oracle Forge",
+  "benchmark": "DAB-like PG+Mongo",
+  "pass@1": 1.0,
+  "confidence_interval": [
+    0.9336,
+    1.0
+  ],
+  "trials_per_query": 3,
+  "total_queries": 54,
+  "connected_db_count": 2,
+  "active_db_types": [
+    "mongodb",
+    "postgresql"
+  ]
+}

@@ -11,8 +11,8 @@
 
 **Worker Agents (database-specific):**
 
-- PostgreSQL worker: gets kb/v2-domain/databases/postgresql_schemas.md
-- MongoDB worker: gets kb/v2-domain/databases/mongodb_schemas.md
+- PostgreSQL worker: gets kb/domain/databases/postgresql_schemas.md
+- MongoDB worker: gets kb/domain/databases/mongodb_schemas.md
 - Each worker returns: {result, query_trace, confidence}
 
 ## Implementation for DAB
@@ -24,7 +24,7 @@
 1. Transaction data → PostgreSQL worker (repeat purchases)
 2. Support tickets → MongoDB worker (ticket counts)
 3. Join key: customer_id (integer in PG, "CUST-{int}" in Mongo)
-4. Time filter: Q3 (fiscal calendar from kb/v2-domain/domain_terms/)
+4. Time filter: Q3 (fiscal calendar from kb/domain/domain_terms/)
 
 **Execution:**
 conductor.spawn(postgres_worker, "repeat_purchases Q3")
@@ -34,7 +34,7 @@ conductor.correlate(results)
 
 ## Failure Recovery
 
-If worker returns error: conductor logs to kb/v3-corrections/failure_log.md
+If worker returns error: conductor logs to kb/correction/failure_log.md
 Then spawns corrected worker with additional context from corrections log
 
 ## Injection Test

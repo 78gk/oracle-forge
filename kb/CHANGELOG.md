@@ -9,9 +9,7 @@
 - resolved_patterns.md - Permanent fixes with confidence scores (autoDream output)
 - regression_prevention.md - Regression test set and run rules
 
-### Changed
-
-- All v3 documents passed injection tests (6/6 passes)
+**Validation:** All v3 documents passed injection tests (6/6 passes)
 
 ## [v2.0.0] - 2026-04-09
 
@@ -27,24 +25,20 @@
 - unstructured/sentiment_mapping.md - Sentiment lexicon with negation
 - domain_terms/business_glossary.md - Term definitions by dataset
 
-### Changed
-
-- All v2 documents passed injection tests (9/9 passes)
+**Validation:** All v2 documents passed injection tests (9/9 passes)
 
 ## [v1.0.0] - 2026-04-08
 
-### Added - v1 Architecture Layer
+### Added - Architecture Layer
 
-- 01_three_layer_memory.md - Claude Code memory architecture
-- 02_autodream_consolidation.md - Session compression pattern
-- 03_tool_scoping_philosophy.md - 40+ tight tools vs generic
-- 04_openai_six_layers.md - OpenAI context architecture
-- 05_conductor_worker_pattern.md - Multi-agent routing
-- 06_evaluation_harness_schema.md - Trace + score schema
+- memory.md - Claude Code three-layer memory architecture
+- autodream_consolidation.md - Session compression pattern
+- tool_scoping_philosophy.md - 40+ tight tools vs generic
+- openai_layers.md - OpenAI six-layer context architecture
+- conductor_worker_pattern.md - Multi-agent routing
+- evaluation_harness_schema.md - Trace + score schema
 
-### Changed
-
-- All v1 documents passed injection tests (6/6 passes)
+**Validation:** All architecture documents passed injection tests (6/6 passes)
 
 ## [v0.1.0] - 2026-04-07
 

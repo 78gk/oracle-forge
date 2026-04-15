@@ -2,9 +2,10 @@
 
 ## PR Requirements
 
-**Title:** "[Team Name] - TRP1 FDE Programme, April 2026"
+**Title:** "[Team llama] - TRP1 FDE Programme, April 2026"
 
 **Files to submit:**
+
 1. `submission/team_name_results.json` — the results JSON file
 2. `AGENT.md` (architecture description)
 
@@ -19,7 +20,7 @@
 ## Key Design Decisions
 - Context layering: [describe your 3+ layers]
 - Multi-database routing: [conductor-worker pattern]
-- Self-correction: [KB v3 corrections log]
+- Self-correction: [kb/correction/ failure log + resolved patterns]
 
 ## What Worked
 - [Pattern 1]

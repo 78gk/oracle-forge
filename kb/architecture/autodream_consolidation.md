@@ -7,7 +7,7 @@ Compresses session transcripts into persistent memory without losing signal. Run
 ## The Algorithm
 
 **Input:** Session transcripts (last 10 sessions, filtered by relevance)
-**Output:** Updated resolved_patterns.md (kb/v3-corrections/resolved_patterns.md)
+**Output:** Updated resolved_patterns.md (kb/correction/resolved_patterns.md)
 
 **Process:**
 

@@ -1,0 +1,124 @@
+{
+  "probes": [
+    {
+      "id": "probe_001",
+      "category": "multi_db_routing",
+      "question": "Count subscribers with support tickets across PostgreSQL and MongoDB.",
+      "available_databases": ["postgresql", "mongodb"],
+      "check": {"type": "used_dbs_contains", "value": ["postgresql", "mongodb"]},
+      "expected_failure_mode": "routing_to_single_db_only"
+    },
+    {
+      "id": "probe_002",
+      "category": "multi_db_routing",
+      "question": "How many records exist when joining subscriber and ticket data across databases?",
+      "available_databases": ["postgresql", "mongodb"],
+      "check": {"type": "answer_equals", "value": 2},
+      "expected_failure_mode": "missing_cross_db_join"
+    },
+    {
+      "id": "probe_003",
+      "category": "multi_db_routing",
+      "question": "Count all subscriber-ticket pairs using PostgreSQL and MongoDB.",
+      "available_databases": ["postgresql", "mongodb"],
+      "check": {"type": "status_equals", "value": "success"},
+      "expected_failure_mode": "router_tool_selection_conflict"
+    },
+    {
+      "id": "probe_004",
+      "category": "multi_db_routing",
+      "question": "Count negative sentiment support ticket mentions across MongoDB and PostgreSQL context.",
+      "available_databases": ["postgresql", "mongodb"],
+      "check": {"type": "used_dbs_contains", "value": ["postgresql", "mongodb"]},
+      "expected_failure_mode": "mongo_only_plan_without_pg_join"
+    },
+    {
+      "id": "probe_005",
+      "category": "multi_db_routing",
+      "question": "How many high-value customers have tickets across PostgreSQL and MongoDB?",
+      "available_databases": ["postgresql", "mongodb"],
+      "check": {"type": "answer_equals", "value": 1},
+      "expected_failure_mode": "incorrect_worker_fanout"
+    },
+    {
+      "id": "probe_006",
+      "category": "ill_formatted_keys",
+      "question": "Join subscriber ids with customer ids and count matches across PostgreSQL and MongoDB.",
+      "available_databases": ["postgresql", "mongodb"],
+      "check": {"type": "answer_equals", "value": 2},
+      "expected_failure_mode": "cust_prefix_join_mismatch"
+    },
+    {
+      "id": "probe_007",
+      "category": "ill_formatted_keys",
+      "question": "Count subscriber-ticket matches where customer ids use CUST prefixes across MongoDB and PostgreSQL.",
+      "available_databases": ["postgresql", "mongodb"],
+      "check": {"type": "answer_equals", "value": 2},
+      "expected_failure_mode": "string_int_key_normalization_failure"
+    },
+    {
+      "id": "probe_008",
+      "category": "ill_formatted_keys",
+      "question": "How many joined rows remain after normalizing subscriber and customer key formats?",
+      "available_databases": ["postgresql", "mongodb"],
+      "check": {"type": "status_equals", "value": "success"},
+      "expected_failure_mode": "join_key_canonicalization_missing"
+    },
+    {
+      "id": "probe_009",
+      "category": "ill_formatted_keys",
+      "question": "Count all subscriber-ticket pairs after key normalization in PostgreSQL and MongoDB.",
+      "available_databases": ["postgresql", "mongodb"],
+      "check": {"type": "answer_equals", "value": 2},
+      "expected_failure_mode": "partial_join_drop_due_to_format"
+    },
+    {
+      "id": "probe_010",
+      "category": "ill_formatted_keys",
+      "question": "Count negative sentiment tickets linked to normalized subscriber keys across databases.",
+      "available_databases": ["postgresql", "mongodb"],
+      "check": {"type": "answer_equals", "value": 1},
+      "expected_failure_mode": "normalized_join_then_extraction_failure"
+    },
+    {
+      "id": "probe_011",
+      "category": "domain_knowledge_gaps",
+      "question": "How many high-value customers have tickets across PostgreSQL and MongoDB?",
+      "available_databases": ["postgresql", "mongodb"],
+      "check": {"type": "answer_equals", "value": 1},
+      "expected_failure_mode": "high_value_definition_not_applied"
+    },
+    {
+      "id": "probe_012",
+      "category": "domain_knowledge_gaps",
+      "question": "Count negative sentiment support ticket mentions across MongoDB and PostgreSQL context.",
+      "available_databases": ["postgresql", "mongodb"],
+      "check": {"type": "answer_equals", "value": 1},
+      "expected_failure_mode": "sentiment_mapping_not_applied"
+    },
+    {
+      "id": "probe_013",
+      "category": "domain_knowledge_gaps",
+      "question": "Count subscribers with support tickets across PostgreSQL and MongoDB.",
+      "available_databases": ["postgresql", "mongodb"],
+      "check": {"type": "status_equals", "value": "success"},
+      "expected_failure_mode": "institutional_context_not_loaded"
+    },
+    {
+      "id": "probe_014",
+      "category": "domain_knowledge_gaps",
+      "question": "Count negative sentiment issues from MongoDB tickets joined with PostgreSQL subscribers.",
+      "available_databases": ["postgresql", "mongodb"],
+      "check": {"type": "answer_equals", "value": 1},
+      "expected_failure_mode": "extraction_before_count_missing"
+    },
+    {
+      "id": "probe_015",
+      "category": "domain_knowledge_gaps",
+      "question": "force_error in cross-database routing for PostgreSQL and MongoDB.",
+      "available_databases": ["postgresql", "mongodb"],
+      "check": {"type": "failure_type", "value": "execution_error"},
+      "expected_failure_mode": "no_failure_classification"
+    }
+  ]
+}

@@ -1,0 +1,283 @@
+{
+  "total": 21,
+  "passed": 0,
+  "failed": 21,
+  "errors": 0,
+  "pass_rate": 0.0,
+  "results": [
+    {
+      "document": "architecture/memory.md",
+      "passed": false,
+      "llm_answer": "ERROR: Error code: 401 - {'error': {'message': 'Invalid API Key', 'type': 'invalid_request_error', 'code': 'invalid_api_key'}}",
+      "error": null,
+      "matched_keywords": [],
+      "missing_keywords": [
+        "MEMORY.md",
+        "topic files",
+        "session transcripts"
+      ],
+      "match_rate": 0.0
+    },
+    {
+      "document": "architecture/autodream_consolidation.md",
+      "passed": false,
+      "llm_answer": "ERROR: Error code: 401 - {'error': {'message': 'Invalid API Key', 'type': 'invalid_request_error', 'code': 'invalid_api_key'}}",
+      "error": null,
+      "matched_keywords": [],
+      "missing_keywords": [
+        "Fridays",
+        "compresses",
+        "session transcripts",
+        "resolved_patterns"
+      ],
+      "match_rate": 0.0
+    },
+    {
+      "document": "architecture/tool_scoping_philosophy.md",
+      "passed": false,
+      "llm_answer": "ERROR: Error code: 401 - {'error': {'message': 'Invalid API Key', 'type': 'invalid_request_error', 'code': 'invalid_api_key'}}",
+      "error": null,
+      "matched_keywords": [],
+      "missing_keywords": [
+        "narrow",
+        "precise",
+        "DB-specific",
+        "boundaries"
+      ],
+      "match_rate": 0.0
+    },
+    {
+      "document": "architecture/openai_layers.md",
+      "passed": false,
+      "llm_answer": "ERROR: Error code: 401 - {'error': {'message': 'Invalid API Key', 'type': 'invalid_request_error', 'code': 'invalid_api_key'}}",
+      "error": null,
+      "matched_keywords": [],
+      "missing_keywords": [
+        "Schema",
+        "institutional",
+        "correction log"
+      ],
+      "match_rate": 0.0
+    },
+    {
+      "document": "architecture/conductor_worker_pattern.md",
+      "passed": false,
+      "llm_answer": "ERROR: Error code: 401 - {'error': {'message': 'Invalid API Key', 'type': 'invalid_request_error', 'code': 'invalid_api_key'}}",
+      "error": null,
+      "matched_keywords": [],
+      "missing_keywords": [
+        "Conductor",
+        "spawns",
+        "workers",
+        "merges"
+      ],
+      "match_rate": 0.0
+    },
+    {
+      "document": "architecture/evaluation_harness_schema.md",
+      "passed": false,
+      "llm_answer": "ERROR: Error code: 401 - {'error': {'message': 'Invalid API Key', 'type': 'invalid_request_error', 'code': 'invalid_api_key'}}",
+      "error": null,
+      "matched_keywords": [],
+      "missing_keywords": [
+        "correct first answers",
+        "queries",
+        "minimum"
+      ],
+      "match_rate": 0.0
+    },
+    {
+      "document": "domain/databases/postgresql_schemas.md",
+      "passed": false,
+      "llm_answer": "ERROR: Error code: 401 - {'error': {'message': 'Invalid API Key', 'type': 'invalid_request_error', 'code': 'invalid_api_key'}}",
+      "error": null,
+      "matched_keywords": [],
+      "missing_keywords": [
+        "abc123def456",
+        "TEXT"
+      ],
+      "match_rate": 0.0
+    },
+    {
+      "document": "domain/databases/mongodb_schemas.md",
+      "passed": false,
+      "llm_answer": "ERROR: Error code: 401 - {'error': {'message': 'Invalid API Key', 'type': 'invalid_request_error', 'code': 'invalid_api_key'}}",
+      "error": null,
+      "matched_keywords": [],
+      "missing_keywords": [
+        "CUST-",
+        "STRING",
+        "prefix"
+      ],
+      "match_rate": 0.0
+    },
+    {
+      "document": "domain/databases/sqlite_schemas.md",
+      "passed": false,
+      "llm_answer": "ERROR: Error code: 401 - {'error': {'message': 'Invalid API Key', 'type': 'invalid_request_error', 'code': 'invalid_api_key'}}",
+      "error": null,
+      "matched_keywords": [],
+      "missing_keywords": [
+        "INTEGER",
+        "no prefix"
+      ],
+      "match_rate": 0.0
+    },
+    {
+      "document": "domain/databases/duckdb_schemas.md",
+      "passed": false,
+      "llm_answer": "ERROR: Error code: 401 - {'error': {'message': 'Invalid API Key', 'type': 'invalid_request_error', 'code': 'invalid_api_key'}}",
+      "error": null,
+      "matched_keywords": [],
+      "missing_keywords": [
+        "analytical",
+        "aggregate",
+        "large datasets"
+      ],
+      "match_rate": 0.0
+    },
+    {
+      "document": "domain/joins/join_key_mappings.md",
+      "passed": false,
+      "llm_answer": "ERROR: Error code: 401 - {'error': {'message': 'Invalid API Key', 'type': 'invalid_request_error', 'code': 'invalid_api_key'}}",
+      "error": null,
+      "matched_keywords": [],
+      "missing_keywords": [
+        "resolve_join_key",
+        "CUST-",
+        "transformation"
+      ],
+      "match_rate": 0.0
+    },
+    {
+      "document": "domain/joins/cross_db_join_patterns.md",
+      "passed": false,
+      "llm_answer": "ERROR: Error code: 401 - {'error': {'message': 'Invalid API Key', 'type': 'invalid_request_error', 'code': 'invalid_api_key'}}",
+      "error": null,
+      "matched_keywords": [],
+      "missing_keywords": [
+        "Query PG",
+        "transform",
+        "query Mongo",
+        "merge"
+      ],
+      "match_rate": 0.0
+    },
+    {
+      "document": "domain/unstructured/text_extraction_patterns.md",
+      "passed": false,
+      "llm_answer": "ERROR: Error code: 401 - {'error': {'message': 'Invalid API Key', 'type': 'invalid_request_error', 'code': 'invalid_api_key'}}",
+      "error": null,
+      "matched_keywords": [],
+      "missing_keywords": [
+        "negative_indicators",
+        ".lower()",
+        "any()"
+      ],
+      "match_rate": 0.0
+    },
+    {
+      "document": "domain/unstructured/sentiment_mapping.md",
+      "passed": false,
+      "llm_answer": "ERROR: Error code: 401 - {'error': {'message': 'Invalid API Key', 'type': 'invalid_request_error', 'code': 'invalid_api_key'}}",
+      "error": null,
+      "matched_keywords": [],
+      "missing_keywords": [
+        "not good",
+        "negative",
+        "not bad",
+        "non-negative"
+      ],
+      "match_rate": 0.0
+    },
+    {
+      "document": "domain/domain_terms/business_glossary.md",
+      "passed": false,
+      "llm_answer": "ERROR: Error code: 401 - {'error': {'message': 'Invalid API Key', 'type': 'invalid_request_error', 'code': 'invalid_api_key'}}",
+      "error": null,
+      "matched_keywords": [],
+      "missing_keywords": [
+        "last 90 days",
+        "churn_date IS NULL"
+      ],
+      "match_rate": 0.0
+    },
+    {
+      "document": "correction/failure_log.md",
+      "passed": false,
+      "llm_answer": "ERROR: Error code: 401 - {'error': {'message': 'Invalid API Key', 'type': 'invalid_request_error', 'code': 'invalid_api_key'}}",
+      "error": null,
+      "matched_keywords": [],
+      "missing_keywords": [
+        "INT to String",
+        "resolve_join_key"
+      ],
+      "match_rate": 0.0
+    },
+    {
+      "document": "correction/failure_by_category.md",
+      "passed": false,
+      "llm_answer": "ERROR: Error code: 401 - {'error': {'message': 'Invalid API Key', 'type': 'invalid_request_error', 'code': 'invalid_api_key'}}",
+      "error": null,
+      "matched_keywords": [],
+      "missing_keywords": [
+        "Multi-Database",
+        "Join Key",
+        "Unstructured",
+        "Domain Knowledge"
+      ],
+      "match_rate": 0.0
+    },
+    {
+      "document": "correction/resolved_patterns.md",
+      "passed": false,
+      "llm_answer": "ERROR: Error code: 401 - {'error': {'message': 'Invalid API Key', 'type': 'invalid_request_error', 'code': 'invalid_api_key'}}",
+      "error": null,
+      "matched_keywords": [],
+      "missing_keywords": [
+        "14/14",
+        "successes"
+      ],
+      "match_rate": 0.0
+    },
+    {
+      "document": "correction/regression_prevention.md",
+      "passed": false,
+      "llm_answer": "ERROR: Error code: 401 - {'error': {'message': 'Invalid API Key', 'type': 'invalid_request_error', 'code': 'invalid_api_key'}}",
+      "error": null,
+      "matched_keywords": [],
+      "missing_keywords": [
+        "Revert",
+        "log failure",
+        "do not deploy"
+      ],
+      "match_rate": 0.0
+    },
+    {
+      "document": "evaluation/dab_scoring_method.md",
+      "passed": false,
+      "llm_answer": "ERROR: Error code: 401 - {'error': {'message': 'Invalid API Key', 'type': 'invalid_request_error', 'code': 'invalid_api_key'}}",
+      "error": null,
+      "matched_keywords": [],
+      "missing_keywords": [
+        "correct first answers",
+        "total queries"
+      ],
+      "match_rate": 0.0
+    },
+    {
+      "document": "evaluation/submission_format.md",
+      "passed": false,
+      "llm_answer": "ERROR: Error code: 401 - {'error': {'message': 'Invalid API Key', 'type': 'invalid_request_error', 'code': 'invalid_api_key'}}",
+      "error": null,
+      "matched_keywords": [],
+      "missing_keywords": [
+        "results JSON",
+        "AGENT.md"
+      ],
+      "match_rate": 0.0
+    }
+  ],
+  "timestamp": "2026-04-12T15:43:07.613867",
+  "model": "llama-3.3-70b-versatile"
+}

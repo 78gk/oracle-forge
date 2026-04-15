@@ -1,0 +1,221 @@
+{
+  "total_queries": 5,
+  "correct_first_answers": 5,
+  "pass@1": 1.0,
+  "confidence_interval_95": [
+    0.5655,
+    1.0
+  ],
+  "results": [
+    {
+      "query_id": "syn_001",
+      "question": "How many high-value customers have support tickets across PostgreSQL and MongoDB?",
+      "expected": {
+        "type": "equals",
+        "value": 1
+      },
+      "answer": 1,
+      "status": "success",
+      "confidence": 0.95,
+      "correct": true,
+      "failure_type": null,
+      "trace": [
+        {
+          "tool_used": "postgres_primary_sql",
+          "selection_reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+          "dialect_handling": "sql",
+          "result_summary": "list(len=2)",
+          "duration_ms": 0,
+          "success": true
+        },
+        {
+          "tool_used": "mongodb_aggregate_pipeline",
+          "selection_reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+          "dialect_handling": "mongodb_aggregation",
+          "result_summary": "list(len=2)",
+          "duration_ms": 0,
+          "success": true
+        },
+        {
+          "merge_event": true,
+          "left_key": "subscriber_id",
+          "right_key": "customer_id",
+          "rows_before": 2,
+          "rows_after": 2
+        }
+      ],
+      "used_databases": [
+        {
+          "database": "postgresql",
+          "reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+          "tool": "postgres_primary_sql"
+        },
+        {
+          "database": "mongodb",
+          "reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+          "tool": "mongodb_aggregate_pipeline"
+        }
+      ]
+    },
+    {
+      "query_id": "syn_002",
+      "question": "Count negative sentiment support tickets from MongoDB issue descriptions.",
+      "expected": {
+        "type": "equals",
+        "value": 1
+      },
+      "answer": 1,
+      "status": "success",
+      "confidence": 0.95,
+      "correct": true,
+      "failure_type": null,
+      "trace": [
+        {
+          "tool_used": "mongodb_aggregate_pipeline",
+          "selection_reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+          "dialect_handling": "mongodb_aggregation",
+          "result_summary": "list(len=2)",
+          "duration_ms": 0,
+          "success": true
+        }
+      ],
+      "used_databases": [
+        {
+          "database": "mongodb",
+          "reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+          "tool": "mongodb_aggregate_pipeline"
+        }
+      ]
+    },
+    {
+      "query_id": "syn_003",
+      "question": "What is the total sales value from DuckDB analytics?",
+      "expected": {
+        "type": "equals",
+        "value": 1500.0
+      },
+      "answer": 1500.0,
+      "status": "success",
+      "confidence": 0.95,
+      "correct": true,
+      "failure_type": null,
+      "trace": [
+        {
+          "tool_used": "duckdb_sql_analytics",
+          "selection_reason": "DuckDB selected for analytical aggregate processing.",
+          "dialect_handling": "sql",
+          "result_summary": "list(len=2)",
+          "duration_ms": 0,
+          "success": true
+        }
+      ],
+      "used_databases": [
+        {
+          "database": "duckdb",
+          "reason": "DuckDB selected for analytical aggregate processing.",
+          "tool": "duckdb_sql_analytics"
+        }
+      ]
+    },
+    {
+      "query_id": "syn_004",
+      "question": "How many transaction records are available in SQLite?",
+      "expected": {
+        "type": "equals",
+        "value": 2
+      },
+      "answer": 2,
+      "status": "success",
+      "confidence": 0.95,
+      "correct": true,
+      "failure_type": null,
+      "trace": [
+        {
+          "tool_used": "postgres_primary_sql",
+          "selection_reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+          "dialect_handling": "sql",
+          "result_summary": "list(len=2)",
+          "duration_ms": 0,
+          "success": true
+        },
+        {
+          "tool_used": "sqlite_sql_runner",
+          "selection_reason": "SQLite selected for lightweight transactional queries.",
+          "dialect_handling": "sql",
+          "result_summary": "list(len=2)",
+          "duration_ms": 0,
+          "success": true
+        },
+        {
+          "merge_event": true,
+          "left_key": "subscriber_id",
+          "right_key": "customer_id",
+          "rows_before": 2,
+          "rows_after": 2
+        }
+      ],
+      "used_databases": [
+        {
+          "database": "postgresql",
+          "reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+          "tool": "postgres_primary_sql"
+        },
+        {
+          "database": "sqlite",
+          "reason": "SQLite selected for lightweight transactional queries.",
+          "tool": "sqlite_sql_runner"
+        }
+      ]
+    },
+    {
+      "query_id": "syn_005",
+      "question": "Join PostgreSQL subscribers with MongoDB tickets and return count.",
+      "expected": {
+        "type": "equals",
+        "value": 2
+      },
+      "answer": 2,
+      "status": "success",
+      "confidence": 0.95,
+      "correct": true,
+      "failure_type": null,
+      "trace": [
+        {
+          "tool_used": "postgres_primary_sql",
+          "selection_reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+          "dialect_handling": "sql",
+          "result_summary": "list(len=2)",
+          "duration_ms": 0,
+          "success": true
+        },
+        {
+          "tool_used": "mongodb_aggregate_pipeline",
+          "selection_reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+          "dialect_handling": "mongodb_aggregation",
+          "result_summary": "list(len=2)",
+          "duration_ms": 0,
+          "success": true
+        },
+        {
+          "merge_event": true,
+          "left_key": "subscriber_id",
+          "right_key": "customer_id",
+          "rows_before": 2,
+          "rows_after": 2
+        }
+      ],
+      "used_databases": [
+        {
+          "database": "postgresql",
+          "reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+          "tool": "postgres_primary_sql"
+        },
+        {
+          "database": "mongodb",
+          "reason": "MongoDB selected for document-oriented or aggregation intent and nested fields.",
+          "tool": "mongodb_aggregate_pipeline"
+        }
+      ]
+    }
+  ]
+}

@@ -1,9 +1,3 @@
-
----
-
-## File: `kb/v2-domain/unstructured/text_extraction_patterns.md`
-
-```markdown
 # Unstructured Text Extraction Patterns for DAB
 
 ## Support Ticket Sentiment Extraction
@@ -12,7 +6,7 @@
 
 **Extraction goal:** "negative sentiment" count
 
-**Implementation:**
+### Implementation
 
 ```python
 negative_indicators = [
@@ -37,10 +31,9 @@ Field: review.text (TEXT) in PostgreSQL
 Extraction examples:
 
 - "mentioned parking" → boolean
-
 - "mentioned price" → boolean
 
-## Implementation:
+### Implementation — Yelp Facility Mentions
 
 ```python
 def extract_mentioned_facilities(text):
@@ -55,7 +48,7 @@ Field: clinical_notes (TEXT) in MongoDB
 
 Extraction: medication names, dosages, frequencies
 
-## Implementation
+### Implementation — Healthcare Medication Extraction
 
 ```python
 medication_pattern = r'\b([A-Z][a-z]+)\s+(\d+\s*(mg|mcg|g|ml))\s+(daily|bid|tid|qid|weekly)\b'
@@ -63,6 +56,34 @@ matches = re.findall(medication_pattern, text)
 
 # Returns: [('Lisinopril', '10 mg', 'daily'), ...]
 ```
+
+## Yelp categories — Pipe-Separated Field (J5)
+
+**Field:** `business.categories` in DuckDB is a **pipe-separated string**, not an array or FK.
+
+Example value: `"Restaurants|Pizza|Italian"`
+
+**Do NOT use:** `WHERE categories = 'Restaurants'` or `WHERE categories LIKE '%Pizza%'`
+(substring match causes false positives on partial category names).
+
+**Correct SQL filter:**
+
+```sql
+WHERE '|' || categories || '|' LIKE '%|' || :category || '|%'
+```
+
+**Correct Python filter:**
+
+```python
+# Exact element match after splitting
+df['categories'].str.split('|').apply(lambda cats: category in [c.strip() for c in cats])
+
+# Or using CategoryMatcher utility
+from utils.unstructured_extractor import CategoryMatcher
+matches = df['categories'].apply(lambda v: CategoryMatcher.match_pipe_field(v, category))
+```
+
+The `business_id` join between DuckDB and MongoDB is a direct 22-char alphanumeric — no normalization needed.
 
 ## Critical Rule
 
@@ -73,3 +94,6 @@ Always apply extraction BEFORE counting or calculating.
 
 Q: How do I extract negative sentiment from support ticket text?
 A: Use negative_indicators list with .lower() and any()
+
+Q: How do I filter Yelp businesses by a single category?
+A: Use pipe-split: WHERE '|' || categories || '|' LIKE '%|Pizza|%'. Do NOT use plain LIKE '%Pizza%'.

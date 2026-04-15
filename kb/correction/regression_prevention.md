@@ -1,7 +1,7 @@
 
 ---
 
-## File: `kb/v3-corrections/regression_prevention.md`
+## File: `kb/correction/regression_prevention.md`
 
 ```markdown
 # Regression Prevention - Queries That Broke and Were Fixed
@@ -15,6 +15,7 @@
 | Q067 | Wrong quarter | Added fiscal calendar lookup | `assert date_range == fiscal_q3` |
 | Q089 | SQL to MongoDB | Added input validation | `assert worker.rejects_sql()` |
 | Q102 | Trailing space mismatch | Added .strip() | `assert mongo_key == pg_key.strip()` |
+| Q118 | Timeout on 54-query batch run | Added rate limiting (max 10 concurrent, 30s timeout) | `assert concurrent_workers <= 10` |
 | Q134 | No lowercasing on sentiment | Added .lower() | `assert extract_sentiment('ANGRY') == 'negative'` |
 | Q156 | Case-sensitive join | Added .lower() to both sides | `assert join_on_id('ABC123', 'abc123') is not None` |
 

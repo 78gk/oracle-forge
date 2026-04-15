@@ -65,13 +65,11 @@ flowchart TD
     Improve -->|No| Remove[Remove Document]
 ```
 
----
-
 ## PART 2: DIRECTORY STRUCTURE
 
 ### 2.1 Complete Tree View
 
-```
+```markdown
 kb/
 │
 ├── 📄 README.md                          # Complete system documentation
@@ -81,7 +79,7 @@ kb/
 ├── 📜 run_injection_tests.sh             # Shell test runner
 ├── 📦 requirements-injection-test.txt    # Python dependencies
 │
-├── 📁 v1-architecture/                   # HOW the agent should work
+├── 📁 architecture/                   # HOW the agent should work
 │   ├── 📄 CHANGELOG.md
 │   ├── 📄 01_three_layer_memory.md
 │   ├── 📄 02_autodream_consolidation.md
@@ -90,7 +88,7 @@ kb/
 │   ├── 📄 05_conductor_worker_pattern.md
 │   └── 📄 06_evaluation_harness_schema.md
 │
-├── 📁 v2-domain/                         # WHAT the data means
+├── 📁 domain/                         # WHAT the data means
 │   ├── 📄 CHANGELOG.md
 │   ├── 📁 databases/
 │   │   ├── 📄 postgresql_schemas.md
@@ -106,7 +104,7 @@ kb/
 │   └── 📁 domain_terms/
 │       └── 📄 business_glossary.md
 │
-├── 📁 v3-corrections/                    # SELF-LEARNING loop
+├── 📁 correction/                    # SELF-LEARNING loop
 │   ├── 📄 CHANGELOG.md
 │   ├── 📄 failure_log.md
 │   ├── 📄 failure_by_category.md
@@ -122,9 +120,9 @@ kb/
 
 | Directory | Purpose | When Used | Update Frequency |
 |-----------|---------|-----------|------------------|
-| `v1-architecture/` | Teach agent HOW to organize itself | Every session start | Weekly (as new patterns emerge) |
-| `v2-domain/` | Provide DAB-specific data knowledge | Every session + on-demand per DB type | Weekly (as new schemas understood) |
-| `v3-corrections/` | Enable self-learning from failures | Every session start + append on failure | Real-time (failures) + Weekly (autoDream) |
+| `architecture/` | Teach agent HOW to organize itself | Every session start | Weekly (as new patterns emerge) |
+| `domain/` | Provide DAB-specific data knowledge | Every session + on-demand per DB type | Weekly (as new schemas understood) |
+| `correction/` | Enable self-learning from failures | Every session start + append on failure | Real-time (failures) + Weekly (autoDream) |
 | `evaluation/` | Define scoring and submission rules | Evaluation runs only | As needed |
 
 ---
@@ -230,16 +228,18 @@ kb/
 
 ### 4.2 File: 01_three_layer_memory.md
 
+```markdown
 | Property | Value |
 |----------|-------|
 | **Purpose** | Claude Code's memory architecture pattern |
 | **Inject When** | Session start (always in context) |
 | **Inject Where** | Conductor agent context |
 | **Test Question** | "What are the three layers of Claude Code's memory system?" |
+```
 
 **Content Summary:**
 
-```
+```markdown
 Layer 1 - MEMORY.md (index): Points to all other KB docs. Never exceeds 500 lines.
 Layer 2 - Topic Files (on-demand): Loaded only when referenced. Max 400 words each.
 Layer 3 - Session Transcripts (searchable): Full logs, autoDream consolidates weekly.
@@ -251,21 +251,23 @@ Layer 3 - Session Transcripts (searchable): Full logs, autoDream consolidates we
 
 ```python
 # At conductor agent initialization
-conductor.load_kb("v1-architecture/01_three_layer_memory.md")
+conductor.load_kb("architecture/01_three_layer_memory.md")
 ```
 
 ### 4.3 File: 02_autodream_consolidation.md
 
+```markdown
 | Property | Value |
 |----------|-------|
 | **Purpose** | Pattern for compressing session transcripts into persistent memory |
 | **Inject When** | Fridays only (when autoDream runs) OR never (tool for developers) |
 | **Inject Where** | autoDream consolidator script |
 | **Test Question** | "When does autoDream run and what does it do?" |
+```
 
 **Content Summary:**
 
-```
+```text
 Input: Session transcripts (last 10 sessions)
 Output: Updated resolved_patterns.md
 
@@ -283,21 +285,23 @@ Process:
 
 ```python
 # In autodream_consolidator.py (runs via cron Friday 23:00)
-consolidator.load_kb("v1-architecture/02_autodream_consolidation.md")
+consolidator.load_kb("architecture/02_autodream_consolidation.md")
 ```
 
 ### 4.4 File: 03_tool_scoping_philosophy.md
 
+```markdown
 | Property | Value |
 |----------|-------|
 | **Purpose** | Why narrow, specific tools outperform generic ones |
 | **Inject When** | Session start (tool design principles) |
 | **Inject Where** | Conductor agent context (tool selection logic) |
 | **Test Question** | "Why are 40+ tight tools better than 5 generic tools?" |
+```
 
 **Content Summary:**
 
-```
+```text
 Claude Code: 40+ tools, each single responsibility
 - query_postgres(sql, db) → JSON (not generic "query_database")
 - resolve_join_key(value, source, target) → transformed
@@ -319,16 +323,18 @@ if "mongodb" in db_type:
 
 ### 4.5 File: 04_openai_six_layers.md
 
+```markdown
 | Property | Value |
 |----------|-------|
 | **Purpose** | OpenAI's context architecture with Oracle Forge minimum (3 layers) |
 | **Inject When** | Session start |
 | **Inject Where** | Conductor agent context |
 | **Test Question** | "What are the minimum three context layers for Oracle Forge?" |
+```
 
 **Content Summary:**
 
-```
+```text
 OpenAI 6 Layers:
 1. Schema & Metadata (always)
 2. Institutional Knowledge (which tables authoritative)
@@ -358,16 +364,18 @@ agent.context_layers = {
 
 ### 4.6 File: 05_conductor_worker_pattern.md
 
+```markdown
 | Property | Value |
 |----------|-------|
 | **Purpose** | Multi-agent routing for cross-database queries |
 | **Inject When** | Session start (routing logic) + on each multi-DB query |
 | **Inject Where** | Conductor agent (orchestration) |
 | **Test Question** | "How does the agent handle multi-database queries?" |
+```
 
 **Content Summary:**
 
-```
+```text
 Conductor Agent:
 - Parses query → identifies needed databases
 - Spawns workers with DB-specific KB subsets
@@ -387,22 +395,24 @@ On failure: log to corrections, retry with fix
 ```python
 # Query routing
 if "postgresql" in required_dbs and "mongodb" in required_dbs:
-    conductor.load_kb("v1-architecture/05_conductor_worker_pattern.md")
+    conductor.load_kb("architecture/05_conductor_worker_pattern.md")
     conductor.spawn_workers()
 ```
 
 ### 4.7 File: 06_evaluation_harness_schema.md
 
+```markdown
 | Property | Value |
 |----------|-------|
 | **Purpose** | Define trace schema and pass@1 scoring |
 | **Inject When** | Evaluation runs only (not during normal query processing) |
 | **Inject Where** | Evaluation harness |
 | **Test Question** | "What is pass@1 and how is it calculated?" |
+```
 
 **Content Summary:**
 
-```
+```text
 Trace Schema: Every tool call logged with input, output, duration, success
 pass@1 = (correct first answers) / (total queries)
 Minimum 50 trials per query
@@ -418,10 +428,8 @@ Regression: If score drops >2%, reject change
 ```python
 # Evaluation harness
 harness.load_kb("evaluation/dab_scoring_method.md")
-harness.load_kb("v1-architecture/06_evaluation_harness_schema.md")
+harness.load_kb("architecture/06_evaluation_harness_schema.md")
 ```
-
----
 
 ## PART 5: V2-DOMAIN LAYER (WHAT)
 
@@ -435,16 +443,18 @@ harness.load_kb("v1-architecture/06_evaluation_harness_schema.md")
 
 ### 5.2 File: databases/postgresql_schemas.md
 
+```markdown
 | Property | Value |
 |----------|-------|
 | **Purpose** | PostgreSQL schemas for Yelp, Telecom, Healthcare datasets |
 | **Inject When** | When query involves PostgreSQL data |
 | **Inject Where** | PostgreSQL worker agent |
 | **Test Question** | "What is the format of Yelp business_id?" |
+```
 
 **Content Summary:**
 
-```
+```text
 Yelp.business:
 - business_id (TEXT, PK) - format: "abc123def456"
 - stars (FLOAT) - 1.0 to 5.0
@@ -463,21 +473,23 @@ Critical: Customer IDs are INT in PG, "CUST-{INT}" in MongoDB
 
 ```python
 if "postgresql" in query_databases:
-    pg_worker.load_kb("v2-domain/databases/postgresql_schemas.md")
+    pg_worker.load_kb("domain/databases/postgresql_schemas.md")
 ```
 
 ### 5.3 File: databases/mongodb_schemas.md
 
+```markdown
 | Property | Value |
 |----------|-------|
 | **Purpose** | MongoDB schemas with nested documents and string prefixes |
 | **Inject When** | When query involves MongoDB data |
 | **Inject Where** | MongoDB worker agent |
 | **Test Question** | "What is the format of customer_id in MongoDB telecom collection?" |
+```
 
 **Content Summary:**
 
-```
+```text
 Telecom.subscribers:
 {
   "customer_id": "CUST-1234567",  // STRING with prefix
@@ -500,8 +512,8 @@ Critical: MongoDB IDs are STRINGS with prefixes. PG IDs are INTs without.
 
 ```python
 if "mongodb" in query_databases:
-    mongo_worker.load_kb("v2-domain/databases/mongodb_schemas.md")
-    mongo_worker.load_kb("v2-domain/joins/join_key_mappings.md")  # Critical pair
+    mongo_worker.load_kb("domain/databases/mongodb_schemas.md")
+    mongo_worker.load_kb("domain/joins/join_key_mappings.md")  # Critical pair
 ```
 
 ### 5.4 File: databases/sqlite_schemas.md
@@ -517,7 +529,7 @@ if "mongodb" in query_databases:
 
 **Content Summary:**
 
-```markdown
+```text
 Transactions table:
 - transaction_id (INTEGER, PK)
 - customer_id (INTEGER) - same as PostgreSQL (INT, no prefix)
@@ -533,10 +545,11 @@ MongoDB requires transformation: f"CUST-{customer_id}"
 
 ```python
 if "sqlite" in query_databases:
-    sqlite_worker.load_kb("v2-domain/databases/sqlite_schemas.md")
+    sqlite_worker.load_kb("domain/databases/sqlite_schemas.md")
 ```
 
 ### 5.5 File: databases/duckdb_schemas.md
+
 ```markdown
 | Property | Value |
 |----------|-------|
@@ -548,7 +561,7 @@ if "sqlite" in query_databases:
 
 **Content Summary:**
 
-```markdown
+```text
 Sales fact table:
 - sale_id (BIGINT)
 - customer_id (INTEGER)
@@ -567,22 +580,24 @@ Important: Telecom fiscal Q3 = Oct-Dec (not calendar Jul-Sep)
 
 ```python
 if "analytical" in query_type or "aggregation" in query_type:
-    duckdb_worker.load_kb("v2-domain/databases/duckdb_schemas.md")
-    duckdb_worker.load_kb("v2-domain/domain_terms/business_glossary.md")  # For fiscal calendar
+    duckdb_worker.load_kb("domain/databases/duckdb_schemas.md")
+    duckdb_worker.load_kb("domain/domain_terms/business_glossary.md")  # For fiscal calendar
 ```
 
 ### 5.6 File: joins/join_key_mappings.md
 
+```markdown
 | Property | Value |
 |----------|-------|
 | **Purpose** | Exact transformation rules for cross-database joins |
 | **Inject When** | Session start (ALWAYS - most critical file) |
 | **Inject Where** | Conductor agent (join resolution logic) |
 | **Test Question** | "How do I join PostgreSQL subscriber_id to MongoDB?" |
+```
 
 **Content Summary:**
 
-```
+```text
 Telecom:
 - PG: subscriber_id = 1234567 (INT)
 - Mongo: customer_id = "CUST-1234567" (STRING)
@@ -605,7 +620,7 @@ Detection logic:
 
 ```python
 # ALWAYS load at session start - most important file
-conductor.load_kb("v2-domain/joins/join_key_mappings.md")  # Priority 1
+conductor.load_kb("domain/joins/join_key_mappings.md")  # Priority 1
 
 # On join attempt
 join_result = conductor.resolve_join(
@@ -618,16 +633,18 @@ join_result = conductor.resolve_join(
 
 ### 5.7 File: joins/cross_db_join_patterns.md
 
+```markdown
 | Property | Value |
 |----------|-------|
 | **Purpose** | Step-by-step patterns for multi-database joins |
 | **Inject When** | When performing cross-database join |
 | **Inject Where** | Conductor agent (join orchestration) |
 | **Test Question** | "What are the steps for PostgreSQL to MongoDB join?" |
+```
 
 **Content Summary:**
 
-```
+```text
 Pattern 1: PG → Mongo (One-to-Many)
 1. Query PG for customer_ids
 2. Transform each: f"CUST-{id}"
@@ -650,22 +667,24 @@ Failure recovery: If join empty, check format mismatch, apply transform, retry
 ```python
 # When conductor detects cross-database join needed
 if len(set(databases)) > 1:
-    conductor.load_kb("v2-domain/joins/cross_db_join_patterns.md")
+    conductor.load_kb("domain/joins/cross_db_join_patterns.md")
     conductor.execute_join_pattern(pattern="pg_to_mongo")
 ```
 
 ### 5.8 File: unstructured/text_extraction_patterns.md
 
+```markdown
 | Property | Value |
 |----------|-------|
 | **Purpose** | Regex and NLP patterns for extracting structured data from free text |
 | **Inject When** | When query involves unstructured fields (review.text, issue_description) |
 | **Inject Where** | Worker that queries the unstructured field (MongoDB or PG worker) |
 | **Test Question** | "How do I extract negative sentiment from support ticket text?" |
+```
 
 **Content Summary:**
 
-```
+```text
 Sentiment extraction from support_tickets.issue_description:
 negative_indicators = ['frustrated', 'angry', 'terrible', 'not working', ...]
 
@@ -689,7 +708,7 @@ Always extract THEN count.
 
 ```python
 if "sentiment" in query or "extract" in query:
-    worker.load_kb("v2-domain/unstructured/text_extraction_patterns.md")
+    worker.load_kb("domain/unstructured/text_extraction_patterns.md")
     
     # Apply extraction before counting
     extracted = extract_sentiment(text_field)
@@ -698,16 +717,18 @@ if "sentiment" in query or "extract" in query:
 
 ### 5.9 File: unstructured/sentiment_mapping.md
 
+```markdown
 | Property | Value |
 |----------|-------|
 | **Purpose** | Complete sentiment lexicon with negation handling |
 | **Inject When** | When query asks for sentiment analysis |
 | **Inject Where** | Worker processing unstructured text |
 | **Test Question** | "How does negation affect sentiment classification?" |
+```
 
 **Content Summary:**
 
-```
+```text
 Negative indicators (always .lower()):
 frustrated, angry, terrible, awful, worst, broken, not working, failed,
 error, complaint, unhappy, disappointed, useless, waste
@@ -729,12 +750,13 @@ if ' not ' in text_lower:
 
 ```python
 if "sentiment" in query:
-    worker.load_kb("v2-domain/unstructured/sentiment_mapping.md")
+    worker.load_kb("domain/unstructured/sentiment_mapping.md")
     sentiment = get_sentiment_with_negation(text)  # From this file
 ```
 
 ### 5.10 File: domain_terms/business_glossary.md
 
+```markdown
 | Property | Value |
 |----------|-------|
 | **Purpose** | Domain-specific definitions not in database schemas |
@@ -764,7 +786,7 @@ Healthcare:
 
 ```python
 # ALWAYS load at session start - second most important
-conductor.load_kb("v2-domain/domain_terms/business_glossary.md")  # Priority 2
+conductor.load_kb("domain/domain_terms/business_glossary.md")  # Priority 2
 
 # On query with ambiguous term
 if "active customer" in query:
@@ -812,7 +834,7 @@ if "active customer" in query:
 
 ```python
 # Session start - ALWAYS load
-conductor.load_kb("v3-corrections/failure_log.md")
+conductor.load_kb("correction/failure_log.md")
 
 # On failure - append
 with open("failure_log.md", "a") as f:
@@ -991,23 +1013,23 @@ JSON format:
 
 | Injection Timing | Documents | Priority |
 |-----------------|-----------|----------|
-| **Every Session Start (ALWAYS)** | `v2-domain/joins/join_key_mappings.md` | 1 (CRITICAL) |
-| | `v2-domain/domain_terms/business_glossary.md` | 2 (CRITICAL) |
-| | `v3-corrections/failure_log.md` | 3 (CRITICAL) |
-| | `v3-corrections/resolved_patterns.md` | 4 |
-| | `v1-architecture/01_three_layer_memory.md` | 5 |
-| | `v1-architecture/05_conductor_worker_pattern.md` | 6 |
-| **On PostgreSQL Query** | `v2-domain/databases/postgresql_schemas.md` | DB-specific |
-| **On MongoDB Query** | `v2-domain/databases/mongodb_schemas.md` | DB-specific |
-| | `v2-domain/joins/join_key_mappings.md` (if join needed) | |
-| **On SQLite Query** | `v2-domain/databases/sqlite_schemas.md` | DB-specific |
-| **On DuckDB Query** | `v2-domain/databases/duckdb_schemas.md` | DB-specific |
-| **On Unstructured Extraction** | `v2-domain/unstructured/text_extraction_patterns.md` | Task-specific |
-| | `v2-domain/unstructured/sentiment_mapping.md` | |
-| **On Join Operation** | `v2-domain/joins/cross_db_join_patterns.md` | Task-specific |
-| **On Failure** | Append to `v3-corrections/failure_log.md` | Write |
-| **Weekly (Friday)** | Run autoDream on `v3-corrections/` | Maintenance |
-| **Evaluation Only** | `v1-architecture/06_evaluation_harness_schema.md` | Evaluation |
+| **Every Session Start (ALWAYS)** | `domain/joins/join_key_mappings.md` | 1 (CRITICAL) |
+| | `domain/domain_terms/business_glossary.md` | 2 (CRITICAL) |
+| | `correction/failure_log.md` | 3 (CRITICAL) |
+| | `correction/resolved_patterns.md` | 4 |
+| | `architecture/01_three_layer_memory.md` | 5 |
+| | `architecture/05_conductor_worker_pattern.md` | 6 |
+| **On PostgreSQL Query** | `domain/databases/postgresql_schemas.md` | DB-specific |
+| **On MongoDB Query** | `domain/databases/mongodb_schemas.md` | DB-specific |
+| | `domain/joins/join_key_mappings.md` (if join needed) | |
+| **On SQLite Query** | `domain/databases/sqlite_schemas.md` | DB-specific |
+| **On DuckDB Query** | `domain/databases/duckdb_schemas.md` | DB-specific |
+| **On Unstructured Extraction** | `domain/unstructured/text_extraction_patterns.md` | Task-specific |
+| | `domain/unstructured/sentiment_mapping.md` | |
+| **On Join Operation** | `domain/joins/cross_db_join_patterns.md` | Task-specific |
+| **On Failure** | Append to `correction/failure_log.md` | Write |
+| **Weekly (Friday)** | Run autoDream on `correction/` | Maintenance |
+| **Evaluation Only** | `architecture/06_evaluation_harness_schema.md` | Evaluation |
 | | `evaluation/dab_scoring_method.md` | |
 | | `evaluation/submission_format.md` | |
 
@@ -1028,13 +1050,13 @@ class OracleForgeAgent:
         """Load all critical KB documents at session start"""
         critical_docs = [
             # Priority 1 - CRITICAL (always load)
-            ("v2-domain/joins/join_key_mappings.md", "join_mapping"),
-            ("v2-domain/domain_terms/business_glossary.md", "glossary"),
-            ("v3-corrections/failure_log.md", "failures"),
-            ("v3-corrections/resolved_patterns.md", "resolved"),
+            ("domain/joins/join_key_mappings.md", "join_mapping"),
+            ("domain/domain_terms/business_glossary.md", "glossary"),
+            ("correction/failure_log.md", "failures"),
+            ("correction/resolved_patterns.md", "resolved"),
             # Priority 2 - Architecture
-            ("v1-architecture/01_three_layer_memory.md", "memory"),
-            ("v1-architecture/05_conductor_worker_pattern.md", "conductor"),
+            ("architecture/01_three_layer_memory.md", "memory"),
+            ("architecture/05_conductor_worker_pattern.md", "conductor"),
         ]
         
         for doc_path, name in critical_docs:
@@ -1061,17 +1083,17 @@ class OracleForgeAgent:
         
         # Load DB-specific schemas
         if "postgresql" in databases:
-            self.load_kb("v2-domain/databases/postgresql_schemas.md")
+            self.load_kb("domain/databases/postgresql_schemas.md")
         
         if "mongodb" in databases:
-            self.load_kb("v2-domain/databases/mongodb_schemas.md")
+            self.load_kb("domain/databases/mongodb_schemas.md")
             if "join" in query.lower() or "customer" in query.lower():
-                self.load_kb("v2-domain/joins/join_key_mappings.md")
+                self.load_kb("domain/joins/join_key_mappings.md")
         
         # Load unstructured extraction if needed
         if any(term in query.lower() for term in ["sentiment", "mention", "extract"]):
-            self.load_kb("v2-domain/unstructured/text_extraction_patterns.md")
-            self.load_kb("v2-domain/unstructured/sentiment_mapping.md")
+            self.load_kb("domain/unstructured/text_extraction_patterns.md")
+            self.load_kb("domain/unstructured/sentiment_mapping.md")
         
         # Execute query
         result = self.execute_with_context(query)
@@ -1086,7 +1108,7 @@ class OracleForgeAgent:
         """Append failure to corrections log"""
         entry = f"\n**[{datetime.now().isoformat()}]** → {wrong}\n**Correct:** {correct}\n"
         
-        with open(self.kb_path / "v3-corrections/failure_log.md", 'a') as f:
+        with open(self.kb_path / "correction/failure_log.md", 'a') as f:
             f.write(entry)
 ```
 
