@@ -67,6 +67,40 @@ docker compose -f mcp/docker-compose.yml --profile ui up -d streamlit
 
 The UI container sets `MCP_BASE_URL=http://toolbox:5000` and bind-mounts the repo to `/workspace` so `kb/` and local paths stay consistent with the Toolbox. **Important:** your `.env` may say `MCP_BASE_URL=http://localhost:5000` for host-side runs; inside Docker, process environment (e.g. `toolbox:5000`) must win, so the app loads `.env` with *merge-only* semantics and does not override `MCP_BASE_URL` when Compose already set it. For production or the public internet, put a reverse proxy with TLS in front of port 8501 and add authentication — do not expose the app or MCP port without controls.
 
+## CI/CD (GitHub Actions)
+
+Workflow: [`.github/workflows/ci-cd.yml`](.github/workflows/ci-cd.yml).
+
+- **CI (every push and pull request to `main`):** runs `pytest tests/`, then builds the Streamlit Docker image (`Dockerfile.streamlit`) to verify it still builds.
+- **CD (push to `main` only):** optional SSH deploy so you do not pull repos by hand on the server.
+
+### Enable automated deploy
+
+1. On the deployment machine, clone this repository once to a fixed path (for example `/opt/oracle-forge`), install Docker and Docker Compose, copy `.env.example` to `.env`, and ensure the host can `git pull` (deploy key or credential for this repo).
+2. In GitHub: **Settings → Secrets and variables → Actions → Variables**, add repository variable **`DEPLOY_ENABLED`** = `true`.
+3. Under **Secrets**, add:
+
+| Secret | Description |
+|--------|-------------|
+| `DEPLOY_HOST` | Server hostname or IP (SSH) |
+| `DEPLOY_USER` | SSH user (e.g. `ubuntu`, `deploy`) |
+| `DEPLOY_SSH_KEY` | Private key (PEM) that can SSH as `DEPLOY_USER` |
+| `DEPLOY_PATH` | Absolute path to the clone on the server (e.g. `/opt/oracle-forge`) |
+
+4. Push to `main`. The deploy job runs `git pull` in `DEPLOY_PATH`, then brings up Postgres, Mongo, Toolbox, and Streamlit (`--profile ui`) via `mcp/docker-compose.yml`.
+
+To **turn off** deploys but keep CI, set **`DEPLOY_ENABLED`** to `false` or delete the variable.
+
+**Security:** restrict SSH keys to the deploy user, firewall the server, and use HTTPS in front of Streamlit in production. The workflow does not print your secrets.
+
+Local test run (same as CI):
+
+```bash
+pip install -r requirements.txt
+pip install pytest
+pytest tests/ -q
+```
+
 ## How It Works
 
 Every file in `kb/` is a self-contained document designed to be injected directly into an LLM context window. No RAG, no embeddings — documents are loaded by path and pasted as system context before query execution.

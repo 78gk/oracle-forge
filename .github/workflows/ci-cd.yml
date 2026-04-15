@@ -1,0 +1,72 @@
+# CI: tests + Docker image build on every push/PR to main.
+# CD: SSH deploy on push to main when repository variable DEPLOY_ENABLED=true (see README).
+name: CI / CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test (pytest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest
+
+      - name: Run tests
+        run: pytest tests/ -q --tb=short
+
+  docker-streamlit:
+    name: Docker (Streamlit image)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Streamlit image
+        run: docker build -f Dockerfile.streamlit -t oracle-forge-streamlit:ci .
+
+  deploy:
+    name: Deploy (SSH)
+    needs: [test, docker-streamlit]
+    if: >
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      vars.DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to host
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script_stop: true
+          script: |
+            set -euo pipefail
+            cd '${{ secrets.DEPLOY_PATH }}'
+            git fetch origin main
+            git checkout main
+            git pull origin main
+            docker compose -f mcp/docker-compose.yml up -d postgres mongo toolbox
+            docker compose -f mcp/docker-compose.yml --profile ui up -d --build streamlit
