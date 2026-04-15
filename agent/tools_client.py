@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import json
+import os
 import time
 from typing import Any, Dict, List, Optional
+import uuid
 
 import httpx
 
@@ -13,35 +16,56 @@ class MCPToolsClient:
         self,
         base_url: str = "http://localhost:5000",
         mock_mode: bool = False,
+        allow_fallback_to_mock: bool = False,
         timeout_seconds: int = 12,
     ) -> None:
         self.base_url = base_url.rstrip("/")
         self.mock_mode = mock_mode
+        self.allow_fallback_to_mock = allow_fallback_to_mock
         self.timeout_seconds = timeout_seconds
         self.discovered_tools: List[Dict[str, Any]] = []
         self.server_reachable = False
+        self.duckdb_path = os.getenv("DUCKDB_PATH", "").strip()
         self.client = httpx.Client(timeout=self.timeout_seconds)
 
     def discover_tools(self) -> List[Dict[str, Any]]:
         if self.mock_mode:
             self.discovered_tools = self._mock_tools_catalog()
             return self.discovered_tools
-        endpoint = f"{self.base_url}/v1/tools"
+        endpoint = f"{self.base_url}/mcp"
         try:
-            response = self.client.get(endpoint)
-            response.raise_for_status()
-            payload = response.json()
-            tools = payload.get("tools", payload if isinstance(payload, list) else [])
-            if not isinstance(tools, list):
-                tools = []
-            self.discovered_tools = [tool for tool in tools if isinstance(tool, dict)]
+            payload = self._mcp_post("tools/list", {})
+            tools = payload.get("tools", [])
+            self.discovered_tools = [tool for tool in tools if isinstance(tool, dict)] if isinstance(tools, list) else []
+            self._inject_local_duckdb_tool()
             self.server_reachable = True
             return self.discovered_tools
-        except Exception:
-            self.server_reachable = False
-            self.mock_mode = True
-            self.discovered_tools = self._mock_tools_catalog()
-            return self.discovered_tools
+        except Exception as exc:
+            try:
+                # Backward compatibility for older Toolbox REST endpoints.
+                fallback_endpoint = f"{self.base_url}/v1/tools"
+                response = self.client.get(fallback_endpoint)
+                response.raise_for_status()
+                payload = response.json()
+                tools = payload.get("tools", payload if isinstance(payload, list) else [])
+                if not isinstance(tools, list):
+                    tools = []
+                self.discovered_tools = [tool for tool in tools if isinstance(tool, dict)]
+                self._inject_local_duckdb_tool()
+                self.server_reachable = True
+                return self.discovered_tools
+            except Exception:
+                self.server_reachable = False
+                if self.allow_fallback_to_mock:
+                    self.mock_mode = True
+                    self.discovered_tools = self._mock_tools_catalog()
+                    return self.discovered_tools
+                raise RuntimeError(
+                    f"MCP server unreachable at {endpoint}. "
+                    f"Set ORACLE_FORGE_MOCK_MODE=true for explicit mock mode, "
+                    f"or ORACLE_FORGE_ALLOW_MOCK_FALLBACK=true to allow automatic fallback. "
+                    f"Original error: {type(exc).__name__}: {exc}"
+                ) from exc
 
     def get_schema_metadata(self) -> Dict[str, Any]:
         if self.mock_mode:
@@ -70,12 +94,28 @@ class MCPToolsClient:
                     for item in content.get(key, []):
                         if item not in metadata[db][key]:
                             metadata[db][key].append(item)
-        return metadata or self._mock_schema_metadata()
+        bootstrap = self._bootstrap_schema_metadata()
+        self._merge_schema_metadata(metadata, bootstrap)
+        return metadata
 
     def select_tool(self, database: str, dialect: str) -> Optional[str]:
         if not self.discovered_tools:
             self.discover_tools()
         db = canonical_db_name(database)
+        if not db:
+            return None
+
+        preferred_names = {
+            "postgresql": ["postgres_sql_query"],
+            "mongodb": ["mongodb_aggregate_business", "mongodb_aggregate_checkin"],
+            "sqlite": ["sqlite_sql_query"],
+            "duckdb": ["duckdb_sql_query", "local_duckdb_sql_query"],
+        }
+        for preferred in preferred_names.get(db, []):
+            for tool in self.discovered_tools:
+                if str(tool.get("name", "")) == preferred:
+                    return preferred
+
         best_name = None
         best_score = float("-inf")
         for tool in self.discovered_tools:
@@ -83,19 +123,43 @@ class MCPToolsClient:
             desc = str(tool.get("description", ""))
             combined = f"{name} {desc}".lower()
             score = 0
-            if db in combined:
-                score += 8
-            if dialect == "mongodb_aggregation" and any(t in combined for t in ["mongo", "aggregation", "pipeline"]):
-                score += 6
-            if dialect == "sql" and any(t in combined for t in ["sql", "query", "postgres", "sqlite", "duckdb"]):
-                score += 4
-            if db != "mongodb" and "aggregation" in combined and "mongo" in combined:
-                score -= 6
-            if db == "mongodb" and "sql" in combined and "mongo" not in combined:
-                score -= 5
+            if db == "mongodb":
+                if any(token in combined for token in ["mongo", "aggregation", "pipeline"]):
+                    score += 10
+                if any(token in combined for token in ["postgres", "sqlite", "duckdb"]):
+                    score -= 10
+            elif db == "postgresql":
+                if "postgres" in combined:
+                    score += 10
+                if any(token in combined for token in ["mongo", "sqlite", "duckdb"]):
+                    score -= 10
+            elif db == "sqlite":
+                if "sqlite" in combined:
+                    score += 10
+                if any(token in combined for token in ["mongo", "postgres", "duckdb"]):
+                    score -= 10
+            elif db == "duckdb":
+                if "duckdb" in combined:
+                    score += 10
+                if any(token in combined for token in ["mongo", "postgres", "sqlite"]):
+                    score -= 10
+
+            if dialect == "mongodb_aggregation":
+                if "mongo" in combined:
+                    score += 4
+                if "sql" in combined:
+                    score -= 6
+            if dialect == "sql":
+                if "sql" in combined:
+                    score += 3
+                if "aggregation" in combined:
+                    score -= 6
+
             if score > best_score:
                 best_score = score
                 best_name = name
+        if best_score < 1:
+            return None
         return best_name
 
     def execute_with_retry(
@@ -163,15 +227,35 @@ class MCPToolsClient:
         }
 
     def _invoke_live(self, tool_name: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+        if tool_name == "local_duckdb_sql_query":
+            return self._invoke_local_duckdb(payload)
+
+        prepared_payload = dict(payload)
+        if "pipeline" in prepared_payload and "pipeline_json" not in prepared_payload:
+            try:
+                prepared_payload["pipeline_json"] = json.dumps(prepared_payload["pipeline"])
+            except Exception:
+                pass
+
+        # Preferred path: MCP JSON-RPC over HTTP endpoint (/mcp).
+        try:
+            result = self._mcp_post("tools/call", {"name": tool_name, "arguments": prepared_payload})
+            if result.get("isError"):
+                return {"ok": False, "error": self._extract_mcp_error(result)}
+            return {"ok": True, "data": self._parse_mcp_tool_result(result)}
+        except Exception:
+            pass
+
+        # Backward compatibility for legacy REST endpoints.
         endpoint_variants = [
             f"{self.base_url}/v1/tools/{tool_name}:invoke",
             f"{self.base_url}/v1/tools/{tool_name}/invoke",
             f"{self.base_url}/v1/tools/invoke",
         ]
         body_variants = [
-            {"arguments": payload},
-            {"input": payload},
-            {"tool": tool_name, "arguments": payload},
+            {"arguments": prepared_payload},
+            {"input": prepared_payload},
+            {"tool": tool_name, "arguments": prepared_payload},
         ]
         last_error = "Unknown invocation error"
         for endpoint in endpoint_variants:
@@ -184,6 +268,84 @@ class MCPToolsClient:
                 except Exception as exc:
                     last_error = str(exc)
         return {"ok": False, "error": last_error}
+
+    def _mcp_post(self, method: str, params: Dict[str, Any]) -> Dict[str, Any]:
+        endpoint = f"{self.base_url}/mcp"
+        request_body = {
+            "jsonrpc": "2.0",
+            "id": str(uuid.uuid4()),
+            "method": method,
+            "params": params,
+        }
+        response = self.client.post(endpoint, json=request_body)
+        response.raise_for_status()
+        payload = response.json()
+        if isinstance(payload, dict) and payload.get("error"):
+            err = payload["error"]
+            raise RuntimeError(f"MCP error {err.get('code')}: {err.get('message')}")
+        if not isinstance(payload, dict) or "result" not in payload:
+            raise RuntimeError(f"Unexpected MCP response shape: {payload}")
+        result = payload.get("result", {})
+        if not isinstance(result, dict):
+            return {"value": result}
+        return result
+
+    @staticmethod
+    def _records_from_tabular_dict(payload: Dict[str, Any]) -> Optional[List[Dict[str, Any]]]:
+        """MCP postgres-execute-sql often returns JSON {columns, rows} instead of row objects."""
+        cols = payload.get("columns")
+        rows = payload.get("rows")
+        if not isinstance(cols, list) or not isinstance(rows, list):
+            return None
+        out: List[Dict[str, Any]] = []
+        for row in rows:
+            if not isinstance(row, (list, tuple)):
+                continue
+            out.append(dict(zip(cols, row)))
+        return out
+
+    def _parse_mcp_tool_result(self, result: Dict[str, Any]) -> Any:
+        content = result.get("content")
+        if not isinstance(content, list):
+            return result
+
+        parsed_items: List[Any] = []
+        for item in content:
+            if not isinstance(item, dict):
+                continue
+            text = item.get("text")
+            if not isinstance(text, str):
+                continue
+            text = text.strip()
+            if not text:
+                continue
+            try:
+                parsed_items.append(json.loads(text))
+            except Exception:
+                parsed_items.append(text)
+
+        if not parsed_items:
+            return result
+        if len(parsed_items) == 1:
+            single = parsed_items[0]
+            if isinstance(single, dict):
+                tabular = self._records_from_tabular_dict(single)
+                if tabular is not None:
+                    return tabular
+                return [single]
+            return single
+        return parsed_items
+
+    def _extract_mcp_error(self, result: Dict[str, Any]) -> str:
+        content = result.get("content")
+        if isinstance(content, list):
+            parts: List[str] = []
+            for item in content:
+                if isinstance(item, dict) and isinstance(item.get("text"), str):
+                    parts.append(item["text"].strip())
+            if parts:
+                return " | ".join(part for part in parts if part)
+        return "Tool execution failed."
 
     def _repair_payload(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         repaired = {}
@@ -208,6 +370,165 @@ class MCPToolsClient:
                         if isinstance(values, list):
                             metadata[db][key].extend(values)
         return metadata
+
+    @staticmethod
+    def _merge_schema_metadata(target: Dict[str, Any], source: Dict[str, Any]) -> None:
+        for db_name, payload in source.items():
+            db = canonical_db_name(db_name)
+            target.setdefault(db, {"tables": [], "collections": []})
+            if not isinstance(payload, dict):
+                continue
+            for key in ["tables", "collections"]:
+                values = payload.get(key, [])
+                if not isinstance(values, list):
+                    continue
+                for value in values:
+                    if value not in target[db][key]:
+                        target[db][key].append(value)
+
+    def _bootstrap_schema_metadata(self) -> Dict[str, Any]:
+        metadata: Dict[str, Any] = {}
+        for tool in self.discovered_tools:
+            tool_name = str(tool.get("name", ""))
+            name_l = tool_name.lower()
+            if not tool_name:
+                continue
+
+            if "mongodb_aggregate_" in name_l:
+                collection = name_l.split("mongodb_aggregate_", 1)[1].strip()
+                if collection:
+                    metadata.setdefault("mongodb", {"tables": [], "collections": []})
+                    coll_entry = {"name": collection}
+                    if coll_entry not in metadata["mongodb"]["collections"]:
+                        metadata["mongodb"]["collections"].append(coll_entry)
+
+            if "duckdb" in name_l and "sql" in name_l:
+                tables = self._introspect_sql_tables(tool_name, "duckdb")
+                if tables:
+                    metadata.setdefault("duckdb", {"tables": [], "collections": []})
+                    for table in tables:
+                        entry = {"name": table}
+                        if entry not in metadata["duckdb"]["tables"]:
+                            metadata["duckdb"]["tables"].append(entry)
+
+            if "sqlite" in name_l and "sql" in name_l:
+                tables = self._introspect_sql_tables(tool_name, "sqlite")
+                if tables:
+                    metadata.setdefault("sqlite", {"tables": [], "collections": []})
+                    for table in tables:
+                        entry = {"name": table}
+                        if entry not in metadata["sqlite"]["tables"]:
+                            metadata["sqlite"]["tables"].append(entry)
+
+            if "postgres" in name_l and "sql" in name_l:
+                tables = self._introspect_sql_tables(tool_name, "postgresql")
+                if tables:
+                    metadata.setdefault("postgresql", {"tables": [], "collections": []})
+                    for table in tables:
+                        entry = {"name": table}
+                        if entry not in metadata["postgresql"]["tables"]:
+                            metadata["postgresql"]["tables"].append(entry)
+
+        return metadata
+
+    def _inject_local_duckdb_tool(self) -> None:
+        if not self.duckdb_path:
+            return
+        existing_names = {str(tool.get("name", "")) for tool in self.discovered_tools if isinstance(tool, dict)}
+        if any("duckdb" in name.lower() for name in existing_names):
+            return
+        self.discovered_tools.append(
+            {
+                "name": "local_duckdb_sql_query",
+                "description": "Local DuckDB SQL execution fallback when MCP does not expose DuckDB.",
+            }
+        )
+
+    def _invoke_local_duckdb(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        sql = str(payload.get("sql", "")).strip()
+        if not sql:
+            return {"ok": False, "error": "Missing SQL payload for local DuckDB execution."}
+        if not self.duckdb_path:
+            return {"ok": False, "error": "DUCKDB_PATH is not configured."}
+        try:
+            import duckdb  # type: ignore
+        except Exception:
+            return {"ok": False, "error": "duckdb package is not installed in the runtime environment."}
+
+        try:
+            conn = duckdb.connect(self.duckdb_path, read_only=True)
+            cursor = conn.execute(sql)
+            rows = cursor.fetchall()
+            columns = [col[0] for col in (cursor.description or [])]
+            conn.close()
+            if not columns:
+                return {"ok": True, "data": []}
+            records = [dict(zip(columns, row)) for row in rows]
+            return {"ok": True, "data": records}
+        except Exception as exc:
+            return {"ok": False, "error": str(exc)}
+
+    def _introspect_sql_tables(self, tool_name: str, db_name: str) -> List[str]:
+        probes: List[str]
+        db = canonical_db_name(db_name)
+        if db == "sqlite":
+            probes = ["SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;"]
+        elif db == "duckdb":
+            probes = [
+                "SELECT table_name FROM information_schema.tables WHERE table_schema='main' ORDER BY table_name;",
+                "SHOW TABLES;",
+            ]
+        else:
+            probes = [
+                "SELECT table_name FROM information_schema.tables WHERE table_schema='public' ORDER BY table_name;",
+            ]
+
+        for sql in probes:
+            result = self._invoke_live(tool_name, {"sql": sql})
+            if not result.get("ok"):
+                continue
+            rows = self._as_record_list(result.get("data"))
+            table_names = self._extract_table_names(rows)
+            if table_names:
+                return table_names
+        return []
+
+    @staticmethod
+    def _extract_table_names(rows: List[Dict[str, Any]]) -> List[str]:
+        names: List[str] = []
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            candidate = row.get("table_name")
+            if candidate is None:
+                candidate = row.get("name")
+            if candidate is None and row:
+                candidate = next(iter(row.values()))
+            if isinstance(candidate, str):
+                stripped = candidate.strip()
+                if stripped and stripped not in names:
+                    names.append(stripped)
+        return names
+
+    @staticmethod
+    def _as_record_list(data: Any) -> List[Dict[str, Any]]:
+        if isinstance(data, list):
+            return [item for item in data if isinstance(item, dict)]
+        if isinstance(data, dict):
+            return [data]
+        if isinstance(data, str):
+            text = data.strip()
+            if not text:
+                return []
+            try:
+                parsed = json.loads(text)
+            except Exception:
+                return []
+            if isinstance(parsed, list):
+                return [item for item in parsed if isinstance(item, dict)]
+            if isinstance(parsed, dict):
+                return [parsed]
+        return []
 
     def _mock_tools_catalog(self) -> List[Dict[str, Any]]:
         return [

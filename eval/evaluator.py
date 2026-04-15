@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -87,27 +88,92 @@ class OracleForgeEvaluator:
         return report
 
     def evaluate_yelp_dataset(self) -> Dict[str, Any]:
-        queries = self._load_dataagentbench_yelp_queries()
+        queries = self.load_dataagentbench_queries(dataset="yelp")
         return self.evaluate_queries(queries)
 
-    def _load_dataagentbench_yelp_queries(self) -> List[Dict[str, Any]]:
+    def load_dataagentbench_queries(self, dataset: str = "yelp") -> List[Dict[str, Any]]:
         dab_root = self.repo_root / "DataAgentBench"
+        if not dab_root.exists():
+            return []
+
+        dataset_key = dataset.strip()
+        if dataset_key.lower().startswith("query_"):
+            dataset_dir_name = dataset_key
+        else:
+            dataset_dir_name = f"query_{dataset_key}"
+
+        dataset_dir = dab_root / dataset_dir_name
+        if not dataset_dir.exists():
+            dataset_dir = next(
+                (p for p in dab_root.iterdir() if p.is_dir() and p.name.lower() == dataset_dir_name.lower()),
+                Path(""),
+            )
+        if not dataset_dir.exists():
+            return []
+
+        available_databases = self._extract_db_types(dataset_dir)
         queries: List[Dict[str, Any]] = []
-        for query_dir in sorted(dab_root.glob("query*")):
+        for query_dir in sorted(dataset_dir.glob("query*"), key=self._query_sort_key):
+            if not query_dir.is_dir():
+                continue
             query_path = query_dir / "query.json"
             if not query_path.exists():
                 continue
-            text = json.loads(query_path.read_text(encoding="utf-8"))
+
+            query_payload = json.loads(query_path.read_text(encoding="utf-8"))
+            if isinstance(query_payload, str):
+                question = query_payload
+            elif isinstance(query_payload, dict) and "query" in query_payload:
+                question = str(query_payload["query"])
+            else:
+                continue
+
             queries.append(
                 {
                     "id": query_dir.name,
-                    "question": text,
-                    "available_databases": ["postgresql", "mongodb"],
+                    "question": question,
+                    "available_databases": available_databases,
                     "schema_info": {},
                     "validator_path": str(query_dir / "validate.py"),
                 }
             )
         return queries
+
+    def _load_dataagentbench_yelp_queries(self) -> List[Dict[str, Any]]:
+        return self.load_dataagentbench_queries(dataset="yelp")
+
+    def _extract_db_types(self, dataset_dir: Path) -> List[str]:
+        db_config_path = dataset_dir / "db_config.yaml"
+        if not db_config_path.exists():
+            return ["postgresql", "mongodb", "sqlite", "duckdb"]
+
+        db_type_map = {
+            "mongo": "mongodb",
+            "mongodb": "mongodb",
+            "postgres": "postgresql",
+            "postgresql": "postgresql",
+            "sqlite": "sqlite",
+            "duckdb": "duckdb",
+        }
+        found: List[str] = []
+        for raw_line in db_config_path.read_text(encoding="utf-8").splitlines():
+            match = re.search(r"^\s*db_type:\s*([A-Za-z0-9_]+)", raw_line)
+            if not match:
+                continue
+            db_key = match.group(1).strip().lower()
+            normalized = db_type_map.get(db_key)
+            if normalized and normalized not in found:
+                found.append(normalized)
+
+        return found or ["postgresql", "mongodb", "sqlite", "duckdb"]
+
+    @staticmethod
+    def _query_sort_key(path: Path) -> Tuple[int, str]:
+        name = path.name
+        suffix = name[5:] if name.startswith("query") else ""
+        if suffix.isdigit():
+            return (int(suffix), name)
+        return (10**9, name)
 
     def _validate_answer(self, query_case: Dict[str, Any], outcome: Dict[str, Any]) -> Tuple[bool, str]:
         validator_path = query_case.get("validator_path")
@@ -142,8 +208,27 @@ class OracleForgeEvaluator:
             values = [self._norm_scalar(item) for item in actual]
             return sorted(values)
         if isinstance(actual, dict):
-            values = [self._norm_scalar(v) for v in actual.values()]
-            return sorted(values)
+            # Prefer row-shaped answers (tool results / merged query output) over raw metrics blobs.
+            records = actual.get("records")
+            if isinstance(records, list) and records:
+                values: List[str] = []
+                for row in records:
+                    if isinstance(row, dict):
+                        for cell in row.values():
+                            values.append(self._norm_scalar(cell))
+                    else:
+                        values.append(self._norm_scalar(row))
+                if values:
+                    return sorted(values)
+            flat_scalars: List[str] = []
+            for value in actual.values():
+                if isinstance(value, (dict, list)):
+                    continue
+                flat_scalars.append(self._norm_scalar(value))
+            if flat_scalars:
+                return sorted(flat_scalars)
+            text = self._stringify_answer(actual)
+            return sorted([self._norm_scalar(item) for item in text.split(",") if item.strip()])
         text = self._stringify_answer(actual)
         return sorted([self._norm_scalar(item) for item in text.split(",") if item.strip()])
 
