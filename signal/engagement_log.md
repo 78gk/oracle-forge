@@ -69,6 +69,7 @@ _Covers: X, Reddit, Medium, LinkedIn, Discord_
 | 2026-04-13 | Kirubel | Hugging Face | Joined server (https://discord.gg/JfAtkvEtRb). Substantive engagement scheduled Apr 14-16. | https://discord.gg/JfAtkvEtRb |
 | 2026-04-13 | Kirubel | EleutherAI | Joined server (https://discord.gg/zBGx3azzUn). Substantive engagement scheduled Apr 14-16. | https://discord.gg/zBGx3azzUn |
 | 2026-04-13 | Kirubel | LlamaIndex | Joined server (https://discord.com/invite/eN6D2HQ4aX). Substantive engagement scheduled Apr 14-16. | https://discord.com/invite/eN6D2HQ4aX |
+| 2026-04-14 | Kirubel (KG) | Hugging Face #general | **5-message practitioner exchange with user H$Go (8:52 PM - 9:49 PM EAT)**. Opened with cross-DB join question framed against DAB; H$Go pushed back on the multi-DB premise. Walked H$Go through: DAB inherited-environment framing → 38% ceiling → MCP Discovery & Routing as the real hard part → agent-driven pattern detection + normalization codegen → KB Injection Testing as automated test gate (21/21 on sub-8B) → **Level 1 (Functional) vs Level 2 (Semantic / 0-rows-no-error) failure framing**. H$Go's "fuzzy AI" join suggestion validated our Correction Layer direction. First substantive Discord conversation of the project. | https://discord.com/channels/879548962464493619/879548962464493622/1493670392236212416 |
 
 ---
 ### Engagement Metrics
@@ -152,6 +153,8 @@ _External responses or findings that changed the team's technical approach._
 | 2026-04-13 | DAB official channels (GitHub + leaderboard site) | No official DAB Discord exists. UC Berkeley EPIC Lab + Hasura PromptQL route community through GitHub issues only | Cohort community strategy redirected to Hugging Face / EleutherAI / LlamaIndex Discords per Practitioner Manual guidance. Three Discords joined. |
 | ~~2026-04-13~~ | ~~u/Far-Comparison-9745 (r/learnmachinelearning)~~ | ~~REMOVED: This was Kirubel's own second Reddit account, not external community engagement~~ | -- |
 | 2026-04-13 | @matanzutta on X (replied to Kirubel's Domain Knowledge Trap reply under @ashpreetbedi/Dash v2) | "the gap between what the schema says and what the business actually means is where most agent queries go wrong" — verbatim restatement of our Domain Knowledge thesis from a non-coordinated practitioner | **Strongest external validation in portfolio so far.** Confirms our framing lands with practitioners outside the cohort. Cite in final engagement summary and Week 9 X content. |
+| 2026-04-14 | u/This-You-2737 (r/learnmachinelearning) | Replied to own join-failures post recommending Great Expectations + Scaylor Orchestrate as pipeline-validation tools | Reinforces our positioning of KB injection testing as agent-native alternative to pipeline-side validation. Validates the problem is well-understood; the agent-native solution path is the differentiator. |
+| 2026-04-14 | H$Go (Hugging Face Discord #general, ~57 min thread) | Initial pushback on multi-DB premise → after DAB framing, suggested "fuzzy AI" matching as the way to handle ID mismatches → asked about test verification | **3rd external practitioner validation.** H$Go's "fuzzy AI" suggestion arrived independently at our Correction Layer architecture (agent-driven pattern detection + normalization codegen). Confirms the Discovery & Routing framing resonates. Closing exchange introduced **Level 1 (Functional) vs Level 2 (Semantic) failure** vocabulary — promising frame for Article B and benchmark thread. |
 
 ---
 
@@ -174,8 +177,8 @@ _External responses or findings that changed the team's technical approach._
 - **Reddit posts:** 1 (new "Silent cross database join failures" post on r/learnmachinelearning)
 - **Reddit replies (Apr 14, deployed by Kirubel as u/Far-Comparison-9745):** 6 substantive replies on r/LocalLLaMA + r/learnmachinelearning
 - **Reddit replies received from external practitioners:** 1 (u/This-You-2737 on join-failures post recommending Great Expectations + Scaylor Orchestrate)
-- **Discord:** 3 servers joined (HF, EleutherAI, LlamaIndex). 1 substantive HF post on cross-DB join question.
-- **External validation logged:** 2 (@matanzutta thesis restatement Apr 13, u/This-You-2737 tooling exchange Apr 14)
+- **Discord:** 3 servers joined (HF, EleutherAI, LlamaIndex). 1 substantive HF #general practitioner exchange (5 messages, ~57 min) with user H$Go on cross-DB joins, MCP discovery, KB injection testing, Level 1 vs Level 2 failure framing.
+- **External validation logged:** 3 (@matanzutta thesis restatement Apr 13; u/This-You-2737 tooling exchange Apr 14; H$Go independently arrived at "fuzzy AI" matching = our Correction Layer pattern Apr 14)
 
 ### Accounts Tracked for Reply-Threading
 
