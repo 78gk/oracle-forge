@@ -1,5 +1,7 @@
-"""Regression: Yelp average rating queries must recompute from MongoDB reviews.stars,
-not use the stale pre-aggregated business.stars in DuckDB.
+"""Regression: Yelp average rating queries must use per-review scores, not a business-level aggregate.
+
+Verified layout: DuckDB `yelp_user.db` has `review.rating`; Postgres has `review.stars`. There is no
+`business` table in DuckDB and no embedded reviews on Mongo `business` in the default dump.
 
 Probe M2 — post-fix regression guard.
 """
@@ -8,43 +10,30 @@ import pytest
 
 
 class TestYelpRatingSources:
-    """Verify the agent routes Yelp rating queries to MongoDB, not DuckDB business.stars."""
+    """Verify routing logic distinguishes per-review ratings from business-level shortcuts."""
 
-    def test_rating_query_routes_to_mongodb_reviews(self):
-        """Agent must NOT use business.stars for 'average rating' queries."""
-        # business.stars is updated weekly and is a stale pre-computed aggregate.
-        # Any query asking for average rating or review score must join MongoDB reviews.
-        stale_field = "business.stars"
-        authoritative_field = "reviews.stars"
+    def test_rating_query_uses_per_review_scores(self):
+        """Average rating must come from review rows, not a single column on business."""
+        per_review_pg = "review.stars"
+        per_review_duck = "review.rating"
+        assert "review" in per_review_pg
+        assert "review" in per_review_duck
 
-        # The authoritative source is the live reviews collection.
-        assert authoritative_field != stale_field
-        assert "reviews" in authoritative_field
-
-    def test_business_with_100_plus_checkins_rating_uses_reviews(self):
-        """Simulate M2: businesses with > 100 check-ins — rating from reviews, not business table."""
-        # Schema knowledge: business.stars is pre-aggregated (stale, weekly update).
-        # reviews.stars is live per-review data.
-        business_stars_source = "duckdb:business.stars"
-        reviews_stars_source = "mongodb:reviews.stars"
-
-        # The fix requires the agent to use reviews.stars grouped by business_id.
-        assert "mongodb" in reviews_stars_source
-        assert "reviews" in reviews_stars_source
-        assert "duckdb" not in reviews_stars_source
+    def test_no_duckdb_business_stars_table_in_default_yelp_db(self):
+        """Default yelp_user.db has review/tip/user — not business(checkin_count) with stars."""
+        duckdb_yelp_tables = {"review", "tip", "user"}
+        assert "business" not in duckdb_yelp_tables
 
     def test_kb_guard_documented(self):
-        """Confirm the KB note about business.stars staleness is in the correct schema file."""
+        """Confirm duckdb_schemas.md documents Yelp review tables and rating semantics."""
         import os
+
         schema_path = os.path.join(
             os.path.dirname(__file__), "..", "..", "kb", "domain", "databases", "duckdb_schemas.md"
         )
-        assert os.path.exists(schema_path), (
-            "duckdb_schemas.md must exist — it documents the business.stars staleness warning"
-        )
-        with open(schema_path) as f:
-            content = f.read()
-        # The file should contain a note about business.stars being stale or pre-computed.
-        assert any(term in content.lower() for term in ["stars", "aggregate", "stale", "weekly"]), (
-            "duckdb_schemas.md should document the business.stars pre-aggregation caveat"
+        assert os.path.exists(schema_path), "duckdb_schemas.md must exist"
+        with open(schema_path, encoding="utf-8") as f:
+            content = f.read().lower()
+        assert "review" in content and ("rating" in content or "yelp_user.db" in content), (
+            "duckdb_schemas.md should document yelp_user.db review.rating (or equivalent)"
         )

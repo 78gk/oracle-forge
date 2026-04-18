@@ -2,14 +2,17 @@
 
 ## crmarenapro Dataset
 
-**FY2025** = July 1 2024 – June 30 2025
+**FY2025** = July 1 2024 – June 30 2025.
 
-SQL filter:
+Use fiscal date filters **only when** the active table has an appropriate date column (e.g. `order_date`, `createddate` on **`"Case"`**). PostgreSQL **`crm_support`** does **not** define `finance.fact_revenue`; pick a real date column after introspection.
+
+Example filter shape (replace `your_date_col` and table):
+
 ```sql
-WHERE order_date BETWEEN '2024-07-01' AND '2025-06-30'
+WHERE your_date_col BETWEEN '2024-07-01' AND '2025-06-30'
 ```
 
-Do NOT use calendar year boundaries (Jan 1 – Dec 31) for any fiscal year query on crmarenapro.
+Do NOT use calendar year boundaries (Jan 1 – Dec 31) for fiscal-year questions when the domain uses July–June fiscal years.
 
 | Fiscal Year | Start | End |
 |-------------|-------|-----|

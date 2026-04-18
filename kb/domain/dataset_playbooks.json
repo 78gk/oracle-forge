@@ -1,0 +1,214 @@
+{
+  "comment": "Per-dataset intent for routing, schema bundle, and query generation. Keys match eval dataset_id / DataAgentBench query_* names.",
+  "datasets": {
+    "agnews": {
+      "summary": "AG News benchmark: news articles with categories (e.g. Sports, World). Full article body text is in MongoDB collection articles.description (not review.text). Titles in articles.title. Filter sports questions by the category/class field when present. SQLite typically holds metadata.db tables article_metadata and authors — join to Mongo articles via article_id. Do not answer news/article questions using a book-review style table named review.",
+      "engines": {
+        "mongodb": {
+          "role": "Primary news corpus: articles with title, description (body), article_id; use aggregation for filters and sorts.",
+          "primary_collection": "articles",
+          "collections": {
+            "articles": {
+              "body_field": "description",
+              "title_field": "title",
+              "id_field": "article_id",
+              "notes": "For 'longest description' tasks use LENGTH(description) or $strLenCP; filter Sports before ordering when the question asks for sports only."
+            }
+          }
+        },
+        "sqlite": {
+          "role": "Metadata and authors; join keys to Mongo articles.article_id.",
+          "table_priority": ["article_metadata", "authors"],
+          "avoid_tables_when": [
+            {
+              "question_keywords": ["article", "sports", "news", "headline", "description"],
+              "avoid": ["review"]
+            }
+          ]
+        }
+      },
+      "suggest_engines_order": ["mongodb", "sqlite"]
+    },
+    "yelp": {
+      "summary": "Yelp: reviews, businesses, users. PostgreSQL: table business_category has columns business_id and category (not category_name). business.attributes is a text dump of Yelp key/value data (often Python-dict-like), not English prose: parking questions must match keys like BikeParking and BusinessParking (e.g. substring '''BikeParking'': ''True''' or regex BusinessParking.*(garage|street|validated|lot|valet).*: True per scripts/reconcile_yelp_ground_truth.py q3). Do not use ILIKE '%bike parking%' / '%business parking%' — those phrases do not appear in attributes. review.date is often TEXT: filter years with review.date::date or CAST(review.date AS date). Reviews use stars; join business to review on business_id. Do not require JOIN business_category unless the question is about categories.",
+      "engines": {
+        "postgresql": {
+          "role": "Canonical relational Yelp: business, review with stars, tip.",
+          "tables": {
+            "review": { "rating_column": "stars" }
+          },
+          "generation_hints": [
+            "When joining a fact table to a dimension table on a shared id column, compare sample values in SCOPED_SCHEMA: if the foreign key uses a different string prefix than the referenced primary key in this benchmark slice, normalize in the join (e.g. REPLACE) so the join is not empty.",
+            "Questions that ask which region has the most rows (reviews, orders, etc.) and also ask for an average for that region: compute per-region counts with GROUP BY, pick the region that wins the count, then average only within that region—not one AVG over the entire fact table.",
+            "Semi-structured text fields (e.g. attributes) use vendor key/value layouts; align to keys and patterns implied by the question—do not rely on casual English phrases that may never appear in the stored string."
+          ]
+        },
+        "mongodb": {
+          "role": "Document business and checkin; not primary for pure star aggregates on reviews.",
+          "primary_collection": "business",
+          "collections": { "business": {}, "checkin": {} }
+        },
+        "duckdb": {
+          "role": "Analytical Yelp slice: review.rating, review.text, join keys business_ref.",
+          "tables": { "review": { "rating_column": "rating" } },
+          "generation_hints": [
+            "Review rows may use business_ref (or similar) while dimension tables use a different business id column name or prefix; align using sample values in SCOPED_SCHEMA before joining."
+          ]
+        },
+        "sqlite": {
+          "role": "Optional local snapshot if mounted.",
+          "table_priority": ["review", "tip", "user"]
+        }
+      },
+      "suggest_engines_order": ["duckdb", "postgresql", "mongodb", "sqlite"]
+    },
+    "bookreview": {
+      "summary": "Amazon-style book reviews: table review has rating, title, text, purchase metadata — not news articles.",
+      "engines": {
+        "sqlite": {
+          "role": "Primary: review table for ratings and review text.",
+          "table_priority": ["review"]
+        },
+        "duckdb": {
+          "role": "User/review analytics if present.",
+          "table_priority": ["review", "user"]
+        }
+      },
+      "suggest_engines_order": ["sqlite", "duckdb"]
+    },
+    "DEPS_DEV_V1": {
+      "summary": "NPM/package dependency and GitHub metadata; packages, versions, stars — not Yelp reviews.",
+      "engines": {
+        "sqlite": {
+          "role": "Package and dependency tables per DAB dump.",
+          "table_priority": ["package", "packages", "dependency", "repo"]
+        },
+        "duckdb": {
+          "role": "Analytical aggregates on package metrics if present."
+        }
+      },
+      "avoid_keywords_mismatch": ["review", "yelp", "business_id"],
+      "suggest_engines_order": ["sqlite", "duckdb"]
+    },
+    "crmarenapro": {
+      "summary": "CRM / arena-style relational data: customers, orders, territories — follow introspected tables.",
+      "engines": {
+        "postgresql": {
+          "role": "Core CRM entities when available."
+        },
+        "sqlite": {
+          "role": "Transactional snapshots."
+        },
+        "duckdb": {
+          "role": "Aggregates and reporting."
+        }
+      },
+      "suggest_engines_order": ["postgresql", "sqlite", "duckdb"]
+    },
+    "GITHUB_REPOS": {
+      "summary": "Repositories, contributors, stars — developer metadata; not consumer reviews.",
+      "engines": {
+        "sqlite": {
+          "role": "Repo and contributor tables per dump."
+        },
+        "duckdb": {
+          "role": "Analytics on repo metrics."
+        },
+        "mongodb": {
+          "role": "Document store if present."
+        }
+      },
+      "suggest_engines_order": ["sqlite", "duckdb", "mongodb"]
+    },
+    "googlelocal": {
+      "summary": "Local business and reviews (Google Local style); review and business-like tables.",
+      "engines": {
+        "sqlite": {
+          "role": "Local review_query style tables."
+        },
+        "mongodb": {
+          "role": "Business documents if present."
+        },
+        "duckdb": {
+          "role": "Aggregates."
+        }
+      },
+      "suggest_engines_order": ["mongodb", "sqlite", "duckdb"]
+    },
+    "music_brainz_20k": {
+      "summary": "MusicBrainz-style tracks, artists, releases — audio metadata.",
+      "engines": {
+        "sqlite": {
+          "role": "Tracks, artists per dump."
+        },
+        "duckdb": {
+          "role": "Analytical queries."
+        },
+        "mongodb": {
+          "role": "Documents if present."
+        }
+      },
+      "suggest_engines_order": ["sqlite", "duckdb", "mongodb"]
+    },
+    "PANCANCER_ATLAS": {
+      "summary": "Cancer genomics / TCGA-style facts — clinical and molecular tables.",
+      "engines": {
+        "duckdb": {
+          "role": "Primary for large analytical joins."
+        },
+        "sqlite": {
+          "role": "Reference slices."
+        },
+        "mongodb": {
+          "role": "Optional document blobs."
+        }
+      },
+      "suggest_engines_order": ["duckdb", "sqlite", "mongodb"]
+    },
+    "PATENTS": {
+      "summary": "Patent publications and classifications — legal/tech text, not Yelp.",
+      "engines": {
+        "sqlite": {
+          "role": "Patent tables per dump."
+        },
+        "duckdb": {
+          "role": "Search and aggregates."
+        },
+        "mongodb": {
+          "role": "Full text if indexed."
+        }
+      },
+      "suggest_engines_order": ["sqlite", "duckdb", "mongodb"]
+    },
+    "stockindex": {
+      "summary": "Stock index time series and constituents — financial analytics.",
+      "engines": {
+        "duckdb": {
+          "role": "Windows and aggregates on index data."
+        },
+        "sqlite": {
+          "role": "Snapshot tables; quote identifiers if names contain special characters."
+        },
+        "mongodb": {
+          "role": "Optional."
+        }
+      },
+      "suggest_engines_order": ["duckdb", "sqlite", "mongodb"]
+    },
+    "stockmarket": {
+      "summary": "Equity / market data — prices, symbols, sectors.",
+      "engines": {
+        "duckdb": {
+          "role": "Analytics and joins on market facts."
+        },
+        "postgresql": {
+          "role": "Relational market data if available."
+        },
+        "sqlite": {
+          "role": "Snapshots."
+        }
+      },
+      "suggest_engines_order": ["duckdb", "postgresql", "sqlite", "mongodb"]
+    }
+  }
+}

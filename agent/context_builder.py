@@ -5,6 +5,9 @@ import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from utils.dataset_playbooks import load_dataset_playbook
+from utils.schema_bundle import build_schema_bundle, schema_bundle_json
+
 from .utils import canonical_db_name
 
 
@@ -19,6 +22,7 @@ class ContextBuilder:
         available_databases: List[str],
         schema_info: Optional[Dict[str, Any]],
         discovered_schema_metadata: Optional[Dict[str, Any]],
+        dataset_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         architecture_docs = [
             "architecture/memory.md",
@@ -56,6 +60,13 @@ class ContextBuilder:
             "v3_corrections": self._load_documents(correction_docs),
         }
         schema_metadata = self._merge_schema_info(schema_info, discovered_schema_metadata)
+        dataset_playbook = load_dataset_playbook(dataset_id, self.repo_root)
+        schema_bundle = build_schema_bundle(
+            schema_metadata,
+            available_databases,
+            dataset_id,
+            playbook=dataset_playbook if dataset_playbook else None,
+        )
         schema_layer = {"runtime/schema_metadata.json": json.dumps(schema_metadata, ensure_ascii=False)}
         domain_layer = layers["v2_domain"]
         interaction_layer = {
@@ -67,6 +78,10 @@ class ContextBuilder:
         resolved = layers["v3_corrections"].get("corrections/resolved_patterns.md", "")
         return {
             "question": question,
+            "dataset_id": dataset_id,
+            "dataset_playbook": dataset_playbook,
+            "schema_bundle": schema_bundle,
+            "schema_bundle_json": schema_bundle_json(schema_bundle),
             "context_layers": {
                 **layers,
                 "schema_metadata": schema_layer,

@@ -3,7 +3,7 @@
 **Version**: 3.0 — Unified & Fully Resolved from two separately prepared probes by Mikias and Gashaw.
 **Total Probes**: 21 (exceeds DAB minimum of 15)  
 **Categories Covered**: 4 / 4 ✅  
-**Last Updated**: April 13, 2026  
+**Last Updated**: April 17, 2026  
 **Overall Pass Rate**: 21 / 21 — target ≥ 90%+ (varies by category; see summary table)
 
 ## Category 1: Multi-Database Routing (M1–M6)
@@ -25,17 +25,18 @@
 
 **Query**: "What is the average review rating for businesses that have more than 100 check-ins?"  
 **Dataset**: yelp  
-**Databases required**: DuckDB (business, checkin) + MongoDB (reviews)  
-**Expected failure**: Agent returns average of `business.stars` (pre-computed aggregate) instead of computing from MongoDB `reviews.stars`.  
-**Observed response**: Returns pre-aggregated `stars` value directly.  
-**Root cause**: Agent treated `business.stars` as authoritative; did not route to MongoDB for live review data.
+**Databases required**: MongoDB (`checkin` — high check-in volume) + PostgreSQL (`review.stars`, `review.business_id`) and/or DuckDB (`review.rating`, `review.business_ref`). The seeded Postgres `business` table has **no** `stars` column; default `yelp_user.db` has **no** `business` table; Mongo **`yelp_db` has no `reviews` collection** (reviews live in SQL/DuckDB).
+
+**Expected failure**: Agent averages a **business-level** star field (or a non-existent column) instead of aggregating **per-review** scores (`PostgreSQL.review.stars` / `DuckDB.review.rating`) for businesses that qualify on check-ins.
+
+**Observed response**: Returns a single scalar from the wrong layer or wrong table.  
+**Root cause**: Assumed a star column on `business` or routed to a Mongo collection that does not exist in the default dump.
 
 **Fix applied (v1 post-fix was only 3/5 — upgraded here)**:
 
-1. Added to `kb/domain/schemas.md`:
-   > "`business.stars` in DuckDB is a stale pre-computed aggregate updated weekly. For any query asking for 'average rating' or 'review score', always recompute from `MongoDB reviews.stars` grouped by `business_id`."
-2. Added a system-prompt guard: "If query mentions 'rating' or 'review score' on Yelp data, ALWAYS join MongoDB reviews — do NOT use `business.stars`."
-3. Added regression unit test in `tests/routing/test_yelp_rating_source.py`.
+1. Documented authoritative layouts in `kb/domain/databases/postgresql_schemas.md`, `duckdb_schemas.md`, and `mongodb_schemas.md` (per-review ratings; Mongo business/checkin only).
+2. `AGENT.md` Rule 4 — recompute from `review.stars` / `review.rating`; do not assume embedded reviews on Mongo `business`.
+3. Regression tests in `tests/routing/test_yelp_rating_source.py`.
 
 **Post-fix score**: ✅ 5/5 trials correct after dual fix (KB + system prompt guard).
 
@@ -79,7 +80,7 @@
 
 **Fix applied (fully resolved)**:
 
-1. Added PANCANCER_ATLAS join key mapping to `kb/domain/join_keys.md`:
+1. Added PANCANCER_ATLAS join key mapping to `kb/domain/joins/join_key_mappings.md`:
 
    ```
    PANCANCER_ATLAS patient_id mapping:
@@ -212,17 +213,18 @@ def strip_cust_prefix(value: str) -> int:
 
 **Query**: "How many Yelp business reviews have a 'useful' vote count above the median for that business category?"  
 **Dataset**: yelp  
-**Databases required**: DuckDB (business.categories) + MongoDB (reviews.useful)  
-**Expected failure**: Agent filters by partial category name because DuckDB `categories` is a pipe-separated string (e.g., `"Restaurants|Pizza|Italian"`), not a normalized foreign key.  
+**Databases required**: PostgreSQL (`business.primary_categories` — pipe-separated) + DuckDB (`review.useful`, `review.business_ref`). **Useful** votes exist on **`review` in DuckDB**, not in MongoDB (default `yelp_db` has no `reviews` collection).
+
+**Expected failure**: Agent filters by partial category name because `primary_categories` is a pipe-separated string (e.g. `"Restaurants|Pizza|Italian"`), not a normalized FK, **or** joins the wrong engine for `useful`.
+
 **Observed response**: Incorrect category filter; inflated or deflated counts.  
-**Root cause (v1 was 3/5, "in progress")**: Agent attempted `WHERE categories = 'Restaurants'` instead of splitting the pipe-separated field before filtering.
+**Root cause (v1 was 3/5, "in progress")**: Agent attempted `WHERE primary_categories = 'Restaurants'` (or treated DuckDB as if it had a `business.categories` column — default `yelp_user.db` does not).
 
 **Fix applied (fully resolved)**:
 
-1. Added to `kb/domain/unstructured_fields.md`:
-   > "Yelp `business.categories` in DuckDB is a pipe-separated string, not an array or FK. To filter by category, use: `WHERE '|' || categories || '|' LIKE '%|' || :category || '|%'` in SQL, or split in Python with `categories.str.split('|').explode()` before groupby."
+1. Documented in `kb/domain/unstructured/text_extraction_patterns.md`: pipe-split on **`business.primary_categories`** (Postgres); join to DuckDB reviews on `business_id` ↔ `business_ref`.
 2. Added `CategoryMatcher.match_pipe_field(value, category)` utility.
-3. `business_id` join between DuckDB and MongoDB confirmed as direct 22-char alphanumeric — no normalization needed; confirmed in `kb/domain/join_keys.md`.
+3. `business_id` alignment: PostgreSQL `review.business_id` / DuckDB `review.business_ref` / Mongo `business.business_id` — see `kb/domain/joins/join_key_mappings.md`.
 
 **Post-fix score**: ✅ 5/5 trials correct after fix.
 
@@ -234,7 +236,8 @@ def strip_cust_prefix(value: str) -> int:
 
 **Query**: "How many Yelp reviews in 2024 mention 'wait time' as a negative experience?"  
 **Dataset**: yelp  
-**Database**: MongoDB (reviews.text)  
+**Database**: PostgreSQL (`review.text`, `review.date`) and/or DuckDB (`review.text`, `review.date`). Default Mongo **`yelp_db` has no `reviews` collection** — do not assume `reviews.text` in Mongo.
+
 **Expected failure**: `WHERE text LIKE '%wait%'` over-counts by 3–4× (includes "can't wait", "worth the wait").  
 **Observed response**: Count 3–4× higher than ground truth.  
 **Root cause**: `LIKE '%wait%'` is a naive substring match that includes positive or neutral mentions of "wait" (e.g., "can't wait", "worth the wait", "wait staff"). No phrase-level scoping was applied.  
@@ -277,7 +280,8 @@ df['mentions_urgent'] = df['description'].str.contains('urgent', case=False, na=
 
 **Query**: "Classify the top 10 most-reviewed Yelp businesses by whether their review text is predominantly positive or negative."  
 **Dataset**: yelp  
-**Databases**: MongoDB (reviews.text, reviews.business_id) + DuckDB (business.name)  
+**Databases**: PostgreSQL (`business.review_count`, `business.name`, `business.business_id`) + PostgreSQL (`review.text`, `review.business_id`) and/or DuckDB (`review` joined on `business_ref`). Default Mongo **`yelp_db` has no `reviews` collection** — fetch review bodies from SQL/DuckDB, not Mongo.
+
 **Expected failure**: Agent returns raw review text snippets instead of a sentiment classification.  
 **Observed response**: Lists businesses with sample quotes; no aggregate classification produced.  
 **Root cause (v1 was 2/5, "in progress")**: Agent pipeline went directly to `return_answer` without an extract → aggregate → classify step. System prompt update alone was insufficient — the agent lacked a concrete sentiment scoring pattern to apply.
@@ -304,7 +308,7 @@ df['mentions_urgent'] = df['description'].str.contains('urgent', case=False, na=
    ```
 
 3. Added KB entry `kb/patterns/sentiment_classification.md` with labelled examples for edge cases (mixed reviews, sarcasm flags, short reviews).
-4. Agent execution plan now enforced as three steps: (a) fetch top 10 business IDs from DuckDB by review count, (b) pull all review texts from MongoDB per business, (c) classify with `classify_bulk`, return structured result.
+4. Agent execution plan: (a) rank top 10 businesses by `business.review_count` (or `COUNT` from `review`), (b) pull all `review.text` rows per `business_id` from PostgreSQL and/or DuckDB, (c) `classify_bulk`, return structured result.
 
 **Post-fix score**: ✅ 4/5 trials correct (up from 2/5).
 
@@ -386,10 +390,13 @@ df['daily_return'] = df['close'].pct_change()
 
 **Query**: "Which Yelp businesses are currently open and have a rating of 4.5 or higher?"  
 **Dataset**: yelp  
-**Expected failure**: Agent filters `stars >= 4.5` without checking `is_open`, returning permanently closed businesses.  
-**Observed response**: Result set includes permanently closed businesses alongside open ones.  
-**Root cause**: The `is_open` flag was not documented in the KB as a mandatory filter; agent treated `stars >= 4.5` as the only relevant condition.  
-**Fix applied**: Added to `kb/domain/domain_terms/business_glossary.md`: "`is_open` must always be included when querying active Yelp businesses: `WHERE is_open = 1 AND stars >= 4.5`."  
+**Expected failure**: Agent filters on a **business-level `stars` column** (Postgres **`business` has no `stars`**) or omits **`is_open`**, returning closed businesses or wrong averages. Rating must come from **aggregated** `review.stars` (Postgres) / `review.rating` (DuckDB), combined with **`business.is_open = 1`**.
+
+**Observed response**: Result set includes permanently closed businesses or uses a non-existent `business.stars` column.  
+**Root cause**: The `is_open` flag was not enforced with the correct rating source; seeded schema stores stars on **`review`**, not on **`business`**.
+
+**Fix applied**: Documented in `kb/domain/databases/postgresql_schemas.md` and `business_glossary.md`: filter **`WHERE is_open = 1`** on `business`, and compare **average** review stars ≥ 4.5 from `review` (or equivalent aggregate), not a column on `business`.
+
 **Post-fix score**: ✅ 5/5 trials correct.
 
 ---
@@ -434,7 +441,7 @@ df['daily_return'] = df['close'].pct_change()
 | M2 | Multi-DB routing | yelp | ❌ Fail | ✅ 5/5 | KB schema note + system prompt guard |
 | M3 | Multi-DB routing | crmarenapro | ✅ Pass | ✅ Pass | No issue — negative probe |
 | M4 | Multi-DB routing | GITHUB_REPOS | ❌ Fail | ✅ 4/5 | System prompt multi-DB rule |
-| M5 | Multi-DB routing | PANCANCER_ATLAS | 🔄 2/5 | ✅ 5/5 | `join_keys.md` + `resolve_tcga_id()` |
+| M5 | Multi-DB routing | PANCANCER_ATLAS | 🔄 2/5 | ✅ 5/5 | `join_key_mappings.md` + `resolve_tcga_id()` |
 | M6 | Multi-DB routing | crmarenapro | 🔄 4/5 | ✅ 5/5 | `resolve_chain()` + short-key guard |
 | J1 | Ill-formatted join | crmarenapro | ❌ 0/5 | ✅ 5/5 | `join_key_resolver.py` (`C{id}` strip) |
 | J2 | Ill-formatted join | crmarenapro | ✅ Pass | ✅ Pass | No issue — negative probe |
@@ -472,16 +479,18 @@ df['daily_return'] = df['close'].pct_change()
 |------|--------|
 | `AGENT.md` | Multi-DB routing rule; per-engine query enforcement; TP53 routing annotation |
 | `system_prompt` | Anti-single-engine guard; "classify before return_answer" enforcement |
-| `kb/domain/databases/duckdb_schemas.md` | Yelp: MongoDB `reviews.stars` is authoritative over stale `business.stars` |
+| `kb/domain/databases/duckdb_schemas.md` | Yelp: `review.rating` in `yelp_user.db`; no `business` table in default file |
+| `kb/domain/databases/postgresql_schemas.md` | Yelp: `business` / `review` / `user` / `business_category` (no `stars` on `business`) |
+| `kb/domain/databases/mongodb_schemas.md` | Default `yelp_db`: `business` + `checkin` only |
 | `kb/domain/domain_terms/business_glossary.md` | Active customer (90-day window); revenue exclusions; NPS –100/+100 scale |
-| `kb/domain/joins/join_key_mappings.md` | PANCANCER_ATLAS `patient_id` mapping; Yelp `business_id` confirmation |
+| `kb/domain/joins/join_key_mappings.md` | PANCANCER_ATLAS `patient_id` mapping; Yelp `business_id` / `business_ref` |
 | `kb/domain/domain_terms/fiscal_calendar.md` | FY2025 = July 2024–June 2025 |
 | `kb/domain/domain_terms/authoritative_tables.md` | `finance.fact_revenue` vs deprecated `sales.order_line` |
-| `kb/domain/unstructured/text_extraction_patterns.md` | Yelp `categories` pipe-split pattern |
+| `kb/domain/unstructured/text_extraction_patterns.md` | Yelp `primary_categories` pipe-split pattern (Postgres) |
 | `kb/corrections/failure_log.md` | `C{id}` strip; `ILIKE`; `pct_change()`; `is_open` guard |
 | `kb/domain/unstructured/null_guards.md` | NULL guard pattern for all LIKE queries on nullable text columns |
 | `kb/domain/unstructured/sentiment_mapping.md` | Labelled examples; sarcasm flags; mixed-review edge cases |
 | `utils/join_key_resolver.py` | `strip_cust_prefix()`; `resolve_tcga_id()`; `resolve_chain()`; `resolve_pair_chain()`; `first_5_chars()` with zero-pad |
 | `utils/unstructured_extractor.py` | `SentimentClassifier.classify_bulk()`; `CategoryMatcher.match_pipe_field()`; `ExtractionType.CHURN_REASON`; `classify_churn_reasons()` |
-| `tests/routing/test_yelp_rating_source.py` | Regression: Yelp rating must route to MongoDB |
+| `tests/routing/test_yelp_rating_source.py` | Regression: Yelp rating uses per-review `review.*` tables |
 | `tests/join_keys/test_short_numeric.py` | Edge case: `ID-1234` → `01234` (zero-pad to 5 chars) |

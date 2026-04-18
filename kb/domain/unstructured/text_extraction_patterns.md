@@ -59,31 +59,31 @@ matches = re.findall(medication_pattern, text)
 
 ## Yelp categories — Pipe-Separated Field (J5)
 
-**Field:** `business.categories` in DuckDB is a **pipe-separated string**, not an array or FK.
+**Field:** `business.primary_categories` in **PostgreSQL** is a **pipe-separated string**, not an array or FK. Default **`yelp_user.db` (DuckDB) has no `business` table** — category filtering is done against Postgres `business`; **`useful`** votes are on **DuckDB `review.useful`**.
 
 Example value: `"Restaurants|Pizza|Italian"`
 
-**Do NOT use:** `WHERE categories = 'Restaurants'` or `WHERE categories LIKE '%Pizza%'`
+**Do NOT use:** `WHERE primary_categories = 'Restaurants'` or `WHERE primary_categories LIKE '%Pizza%'`
 (substring match causes false positives on partial category names).
 
 **Correct SQL filter:**
 
 ```sql
-WHERE '|' || categories || '|' LIKE '%|' || :category || '|%'
+WHERE '|' || primary_categories || '|' LIKE '%|' || :category || '|%'
 ```
 
 **Correct Python filter:**
 
 ```python
 # Exact element match after splitting
-df['categories'].str.split('|').apply(lambda cats: category in [c.strip() for c in cats])
+df['primary_categories'].str.split('|').apply(lambda cats: category in [c.strip() for c in cats])
 
 # Or using CategoryMatcher utility
 from utils.unstructured_extractor import CategoryMatcher
-matches = df['categories'].apply(lambda v: CategoryMatcher.match_pipe_field(v, category))
+matches = df['primary_categories'].apply(lambda v: CategoryMatcher.match_pipe_field(v, category))
 ```
 
-The `business_id` join between DuckDB and MongoDB is a direct 22-char alphanumeric — no normalization needed.
+Join **`review.business_ref`** (DuckDB) to **`business.business_id`** (Postgres) / **`business.business_id`** (Mongo) per `join_key_mappings.md`.
 
 ## Critical Rule
 
@@ -96,4 +96,4 @@ Q: How do I extract negative sentiment from support ticket text?
 A: Use negative_indicators list with .lower() and any()
 
 Q: How do I filter Yelp businesses by a single category?
-A: Use pipe-split: WHERE '|' || categories || '|' LIKE '%|Pizza|%'. Do NOT use plain LIKE '%Pizza%'.
+A: Use pipe-split on `primary_categories`: `WHERE '|' || primary_categories || '|' LIKE '%|Pizza|%'.` Do NOT use plain `LIKE '%Pizza%'`.

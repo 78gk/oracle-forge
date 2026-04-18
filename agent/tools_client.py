@@ -18,6 +18,7 @@ class MCPToolsClient:
         mock_mode: bool = False,
         allow_fallback_to_mock: bool = False,
         timeout_seconds: int = 12,
+        duckdb_path: Optional[str] = None,
     ) -> None:
         self.base_url = base_url.rstrip("/")
         self.mock_mode = mock_mode
@@ -25,7 +26,7 @@ class MCPToolsClient:
         self.timeout_seconds = timeout_seconds
         self.discovered_tools: List[Dict[str, Any]] = []
         self.server_reachable = False
-        self.duckdb_path = os.getenv("DUCKDB_PATH", "").strip()
+        self.duckdb_path = (duckdb_path if duckdb_path is not None else os.getenv("DUCKDB_PATH", "")).strip()
         self.client = httpx.Client(timeout=self.timeout_seconds)
 
     def discover_tools(self) -> List[Dict[str, Any]]:

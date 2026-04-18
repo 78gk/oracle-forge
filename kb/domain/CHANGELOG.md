@@ -1,35 +1,32 @@
+# Domain layer changelog
 
----
+## 2026-04-17 — Align KB with DataAgentBench seeds
 
-# V2 - DOMAIN LAYER
+- **`databases/postgresql_schemas.md`:** Document `bookreview_db`, `googlelocal_db`, `crm_support`, `pancancer_clinical`, `patent_CPCDefinition` as loaded from DAB SQL.
+- **`databases/mongodb_schemas.md`:** Document `articles_db.articles` for AG News.
+- **`databases/sqlite_schemas.md`:** Document `metadata.db` (`article_metadata`, `authors`); paths, quoting for `#` in identifiers; clarify distinct `review_query.db` per benchmark.
+- **`databases/duckdb_schemas.md`:** Replace fictional PANCANCER `gene_expression` sketch with **`Mutation_Data`** / **`RNASeq_Expression`**; stock quoting note; clarify illustrative vs verified sections.
+- **`domain_terms/authoritative_tables.md`:** Replace fictional `finance.fact_revenue` story with actual **`crm_support`** tables; state hypothetical finance cube separately.
+- **`domain_terms/business_glossary.md`:** Ground crmarenapro terms in **`crm_support`** + introspection; mark NPS/revenue rubrics as conditional.
+- **`joins/join_key_mappings.md`:** PANCANCER joins use **`ParticipantBarcode`** / **`clinical_info`**; deprecate old gene_expression wording.
+- **`joins/cross_db_join_patterns.md`:** Remove erroneous file wrapper; add grounding note for real vs reference schemas.
 
-## File: `kb/domain/CHANGELOG.md`
+## 2026-04-09 — v2 domain layer
 
-```markdown
-# v2 Domain Layer Changelog
+### Added — databases
 
-## [2.0.0] - 2026-04-09
+- `postgresql_schemas.md` — Yelp + reference telecom/healthcare sketches
+- `mongodb_schemas.md` — Yelp + reference docs
+- `sqlite_schemas.md` — Default bookreview path
+- `duckdb_schemas.md` — Yelp + reference analytics sketches
 
-### Added - Databases
-- postgresql_schemas.md - Yelp, Telecom, Healthcare schemas with join notes
-- mongodb_schemas.md - Nested document structures for all datasets
-- sqlite_schemas.md - Lightweight transaction database schemas
-- duckdb_schemas.md - Analytical columnar schemas
+### Added — joins
 
-### Added - Joins
-- join_key_mappings.md - Complete transformation mappings across all datasets
-- cross_db_join_patterns.md - SQL + MongoDB aggregation pipeline patterns
+- `join_key_mappings.md`
+- `cross_db_join_patterns.md`
 
-### Added - Unstructured
-- text_extraction_patterns.md - Regex + NLP extraction with code examples
-- sentiment_mapping.md - Complete sentiment lexicon with negation handling
+### Added — unstructured / terms
 
-### Added - Domain Terms
-- business_glossary.md - Definitions for "churn", "active", "fiscal quarter" by dataset
+- `unstructured/*`, `domain_terms/business_glossary.md`, etc.
 
-### Injection Test Status
-- All 9 documents passed injection tests on 2026-04-09
-
-### Notes
-- Each document optimized for direct context injection
-- No LLM-pretrained knowledge included
+Each KB file is intended for agent context injection; validate against live seeds after major data loads.

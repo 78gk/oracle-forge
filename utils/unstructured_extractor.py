@@ -173,7 +173,7 @@ class UnstructuredExtractor:
         over-counting from phrases like 'can't wait', 'wait staff', 'worth the wait'.
 
         Args:
-            texts: List of review text strings (e.g. MongoDB reviews.text for a year)
+            texts: List of review text strings (e.g. PostgreSQL/DuckDB `review.text` for a year)
 
         Returns:
             Integer count of reviews matching the scoped complaint pattern.
@@ -281,7 +281,7 @@ class SentimentClassifier:
 
 
 class CategoryMatcher:
-    """Match against pipe-separated category strings (e.g. Yelp business.categories).
+    """Match against pipe-separated category strings (e.g. Postgres `business.primary_categories`).
 
     Yelp stores categories as a pipe-separated string like 'Restaurants|Pizza|Italian',
     not as a normalized foreign key or array.  Direct equality or LIKE '%Pizza%' will

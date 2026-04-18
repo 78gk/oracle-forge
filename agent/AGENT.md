@@ -82,10 +82,12 @@ Join key transformation required:
 
 ### Rule 4 — Yelp Rating Source Guard (fixes M2)
 
-> For any query asking for **average rating** or **review score** on Yelp data, always
-> recompute from `MongoDB reviews.stars` grouped by `business_id`.
-> **Do NOT use `DuckDB business.stars`** — it is a pre-computed aggregate updated weekly
-> (stale; documented in `kb/domain/databases/duckdb_schemas.md`).
+> For **average rating** or **review score** on Yelp data, recompute from **per-review**
+> rows: PostgreSQL `review.stars` and/or DuckDB `review.rating`, grouped by `business_id`
+> (or `business_ref` in DuckDB). The seeded Postgres `business` table has **no** `stars`
+> column; default `yelp_user.db` has **no** `business` table — see
+> `kb/domain/databases/postgresql_schemas.md` and `kb/domain/databases/duckdb_schemas.md`.
+> The default Mongo `yelp_db` dump does **not** embed reviews on `business`.
 
 ---
 
@@ -106,9 +108,10 @@ Join key transformation required:
 - **Single-DB assumption (M1, M4):** Early sessions silently returned partial results because
   the agent scoped to one engine without checking others.  Fixed by enforcing the `list_db`
   cross-scope check (Rule 1) and the per-engine execution rule (Rule 2).
-- **Stale aggregate fields (M2):** `business.stars` in DuckDB looked authoritative but was a
-  weekly batch snapshot.  Fixed with a KB guard and system-prompt override directing all
-  rating queries to MongoDB `reviews.stars`.
+- **Stale or wrong rating source (M2):** Treating a business-level star field as authoritative
+  instead of aggregating `review.stars` / `review.rating`. Fixed with KB + prompt guard pointing
+  at the actual review tables (Postgres and DuckDB); Mongo business docs in the default seed do
+  not carry embedded reviews.
 - **Naive LIKE matching (U1):** `WHERE text LIKE '%wait%'` matched positive phrases like
   "can't wait" and "worth the wait", inflating counts 3–4×.  Fixed with a targeted complaint
   regex pattern.
