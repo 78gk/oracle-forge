@@ -13,7 +13,7 @@ Sourced from `planning/inception_week8_oracle_forge.md`.
 | Gashaw   | Intelligence Officer  | KB v1 architecture docs, Claude Code & OpenAI source research |
 | Mikias   | Intelligence Officer  | KB v2 domain docs, join key glossary, adversarial probe library |
 | Meseret  | Signal Corps          | X/Twitter threads, LinkedIn article, community engagement |
-| Kirubel  | Signal Corps          | Daily Slack updates, Cloudflare application, Reddit/Discord |
+| Kirubel  | Signal Corps          | Daily Slack updates, medium contribution Reddit/Discord |
 
 ## Architecture
 
