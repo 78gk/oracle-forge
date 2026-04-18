@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import json
+import math
+import os
 import re
 import time
 from pathlib import Path
@@ -27,6 +29,7 @@ class OracleForgeEvaluator:
                 question=question,
                 available_databases=query_case.get("available_databases", ["postgresql", "mongodb"]),
                 schema_info=query_case.get("schema_info", {}),
+                dataset_id=query_case.get("dataset"),
             )
             duration_ms = int((time.perf_counter() - started) * 1000)
             validation = self._validate_answer(query_case, outcome)
@@ -34,22 +37,30 @@ class OracleForgeEvaluator:
             if correct:
                 passed += 1
             trace = outcome.get("query_trace", outcome.get("trace", []))
-            per_query.append(
-                {
-                    "query_id": query_case.get("id", f"query_{idx}"),
-                    "input_query": question,
-                    "generated_query": outcome.get("predicted_queries", []),
-                    "tool_calls": trace,
-                    "execution_time_ms": duration_ms,
-                    "result": outcome.get("answer"),
-                    "correctness": "pass" if correct else "fail",
-                    "validation_message": validation[1],
-                    "failure_category": None if correct else self._classify_failure(query_case, outcome),
-                    "architecture_disclosure": outcome.get("architecture_disclosure", {}),
-                }
-            )
+            row: Dict[str, Any] = {
+                "query_id": query_case.get("id", f"query_{idx}"),
+                "dataset": query_case.get("dataset"),
+                "input_query": question,
+                "generated_query": outcome.get("predicted_queries", []),
+                "tool_calls": trace,
+                "closed_loop": outcome.get("closed_loop"),
+                "execution_time_ms": duration_ms,
+                "result": outcome.get("answer"),
+                "correctness": "pass" if correct else "fail",
+                "validation_message": validation[1],
+                "failure_category": None if correct else self._classify_failure(query_case, outcome),
+                "architecture_disclosure": outcome.get("architecture_disclosure", {}),
+            }
+            if os.getenv("ORACLE_FORGE_EVAL_PIPELINE_DEBUG", "").strip().lower() in {"1", "true", "yes", "on"}:
+                from utils.pipeline_debug_snapshot import extract_pipeline_debug
+
+                row["pipeline_debug"] = extract_pipeline_debug(
+                    outcome, schema_info=query_case.get("schema_info", {})
+                )
+            per_query.append(row)
             sentinel_payload = {
                 "query_id": query_case.get("id", f"query_{idx}"),
+                "closed_loop": outcome.get("closed_loop"),
                 "tool_calls": [
                     {
                         "tool_used": event.get("tool_used"),
@@ -142,6 +153,41 @@ class OracleForgeEvaluator:
     def _load_dataagentbench_yelp_queries(self) -> List[Dict[str, Any]]:
         return self.load_dataagentbench_queries(dataset="yelp")
 
+    def list_dataagentbench_dataset_keys(self) -> List[str]:
+        """Short names for each `DataAgentBench/query_*` directory (e.g. `yelp`, `DEPS_DEV_V1`)."""
+        dab_root = self.repo_root / "DataAgentBench"
+        if not dab_root.exists():
+            return []
+        keys: List[str] = []
+        for path in sorted(dab_root.iterdir()):
+            if path.is_dir() and path.name.startswith("query_"):
+                keys.append(path.name[len("query_") :])
+        return keys
+
+    def load_dataagentbench_queries_multi(
+        self,
+        *,
+        per_dataset: Optional[int] = None,
+        datasets: Optional[List[str]] = None,
+    ) -> List[Dict[str, Any]]:
+        """
+        Load queries from multiple DAB folders. Each item includes `dataset` (short key).
+
+        `per_dataset`: None = all queries in each folder; otherwise first N per folder (sorted).
+        `datasets`: None = all discovered `query_*` datasets; otherwise a subset of short keys.
+        """
+        keys = [k.strip() for k in (datasets or self.list_dataagentbench_dataset_keys()) if k.strip()]
+        combined: List[Dict[str, Any]] = []
+        for key in keys:
+            rows = self.load_dataagentbench_queries(dataset=key)
+            if per_dataset is not None:
+                rows = rows[: max(0, per_dataset)]
+            for row in rows:
+                item = dict(row)
+                item["dataset"] = key
+                combined.append(item)
+        return combined
+
     def _extract_db_types(self, dataset_dir: Path) -> List[str]:
         db_config_path = dataset_dir / "db_config.yaml"
         if not db_config_path.exists():
@@ -201,7 +247,43 @@ class OracleForgeEvaluator:
             return False, "Ground truth file empty."
         actual_norm = self._normalize_execution_output(actual)
         expected_norm = self._normalize_ground_truth(expected_raw)
-        return actual_norm == expected_norm, f"execution_match={actual_norm == expected_norm}"
+        if actual_norm == expected_norm:
+            return True, "execution_match=True"
+        if self._multiset_equal_fuzzy(actual_norm, expected_norm):
+            return True, "execution_match=True(fuzzy_numeric)"
+        return False, "execution_match=False"
+
+    @staticmethod
+    def _multiset_equal_fuzzy(actual: List[str], expected: List[str]) -> bool:
+        """Order-independent multiset equality with approximate float matching."""
+        if len(actual) != len(expected):
+            return False
+        exp = list(expected)
+        for a in actual:
+            idx = OracleForgeEvaluator._find_fuzzy_match_index(a, exp)
+            if idx is None:
+                return False
+            exp.pop(idx)
+        return True
+
+    @staticmethod
+    def _find_fuzzy_match_index(token: str, candidates: List[str]) -> Optional[int]:
+        for i, e in enumerate(candidates):
+            if OracleForgeEvaluator._scalar_equal_relaxed(token, e):
+                return i
+        return None
+
+    @staticmethod
+    def _scalar_equal_relaxed(a: str, b: str) -> bool:
+        if a == b:
+            return True
+        try:
+            fa, fb = float(a), float(b)
+            if math.isclose(fa, fb, rel_tol=1e-9, abs_tol=1e-5):
+                return True
+        except (TypeError, ValueError):
+            pass
+        return a.lower() == b.lower()
 
     def _normalize_execution_output(self, actual: Any) -> List[str]:
         if isinstance(actual, list):

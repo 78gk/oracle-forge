@@ -1,0 +1,111 @@
+{
+  "dataset": "DataAgentBench yelp",
+  "dataset_path": "D:\\FDE-Training\\oracle-forge\\DataAgentBench\\query_yelp",
+  "run": {
+    "dab_scope": "single",
+    "dataset": "yelp",
+    "per_dataset": null,
+    "datasets_included": [
+      "yelp"
+    ],
+    "max_queries": 1
+  },
+  "evaluated_at_utc": "2026-04-18T18:38:44.464631+00:00",
+  "total_queries": 1,
+  "trials_per_query": 1,
+  "correct_first_answers": 1,
+  "correct_trials": 1,
+  "total_trials": 1,
+  "pass@1": 1.0,
+  "overall_trial_accuracy": 1.0,
+  "per_dataset_summary": {
+    "yelp": {
+      "queries": 1,
+      "first_trial_correct": 1,
+      "pass@1": 1.0
+    }
+  },
+  "queries": [
+    {
+      "id": "query1",
+      "composite_id": "yelp:query1",
+      "dataset": "yelp",
+      "question": "What is the average rating of all businesses located in Indianapolis, Indiana?",
+      "first_trial_correct": true,
+      "trial_accuracy": 1.0,
+      "trials": [
+        {
+          "trial": 1,
+          "correct": true,
+          "eval_correct": true,
+          "validation_message": "execution_match=True",
+          "status": "success",
+          "answer": 3.547008547008547,
+          "confidence": 1.0,
+          "closed_loop": {
+            "ok": true,
+            "attempt_count": 1,
+            "replans": 0,
+            "attempts": [
+              {
+                "attempt": 1,
+                "all_steps_ok": true,
+                "step_ok": [
+                  true
+                ],
+                "replan_context": null
+              }
+            ]
+          },
+          "query_trace": [
+            {
+              "tool_used": "postgres_sql_query",
+              "selection_reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+              "dialect_handling": "sql",
+              "raw_query": "SELECT AVG(r.stars) AS average_rating\nFROM business b\nJOIN review r\n  ON r.business_id = REPLACE(b.business_id, 'businessid_', 'businessref_')\nWHERE b.description ILIKE '%Indianapolis%'\n  AND b.state_code = 'IN';",
+              "result_summary": "list(len=1)",
+              "duration_ms": 93,
+              "success": true,
+              "failure_type": null
+            },
+            {
+              "event": "closed_loop",
+              "closed_loop_ok": true,
+              "attempt_count": 1,
+              "replans": 0,
+              "attempts": [
+                {
+                  "attempt": 1,
+                  "all_steps_ok": true,
+                  "step_ok": [
+                    true
+                  ],
+                  "replan_context": null
+                }
+              ]
+            },
+            {
+              "merge_strategy": "single_db",
+              "row_count": 1,
+              "database": "postgresql"
+            }
+          ],
+          "token_usage": {
+            "prompt_tokens": 3704,
+            "completion_tokens": 196,
+            "total_tokens": 3900,
+            "max_prompt_tokens": 3500,
+            "max_tool_loops": 12
+          },
+          "used_databases": [
+            {
+              "database": "postgresql",
+              "reason": "PostgreSQL selected as primary SQL source with strongest relational coverage.",
+              "tool": "postgres_sql_query"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

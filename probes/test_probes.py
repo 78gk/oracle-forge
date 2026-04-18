@@ -57,8 +57,8 @@ PROBES: List[Tuple[str, str, str, List[str]]] = [
         "M2", "M",
         "What is the average review rating for businesses that have more than "
         "100 check-ins?",
-        # Must recompute from MongoDB reviews.stars, NOT use stale business.stars.
-        # Correct response names a rating value derived from live review data.
+        # Per-review stars: PostgreSQL review.stars / DuckDB review.rating; check-ins from Mongo checkin.
+        # Correct response names a rating value derived from aggregated review rows (not business.stars).
         ["rating", "check-ins"],
     ),
     (
@@ -128,8 +128,8 @@ PROBES: List[Tuple[str, str, str, List[str]]] = [
         "J5", "J",
         "How many Yelp business reviews have a 'useful' vote count above the "
         "median for that business category?",
-        # DuckDB business.categories is pipe-separated ('Restaurants|Pizza|Italian').
-        # Must split on '|' for exact category match; business_id join is direct.
+        # Postgres business.primary_categories is pipe-separated; useful is on DuckDB review.useful.
+        # Split on '|' for exact category match; join review.business_ref to business.business_id.
         ["useful", "median"],
     ),
 
@@ -155,7 +155,7 @@ PROBES: List[Tuple[str, str, str, List[str]]] = [
         "Classify the top 10 most-reviewed Yelp businesses by whether their "
         "review text is predominantly positive or negative.",
         # Agent must call classify_bulk() BEFORE return_answer.
-        # Three-step pipeline: top-10 IDs (DuckDB) → texts (MongoDB) → classify.
+        # Top businesses (Postgres business) → review.text from Postgres/DuckDB → classify_bulk.
         ["positive", "negative"],
     ),
     (

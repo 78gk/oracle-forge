@@ -1,0 +1,48 @@
+{
+  "comment": "Per-dataset connection overrides. Paths relative to repo root. Include mongodb_database only for benchmarks that actually use MongoDB (see DataAgentBench/query_*/db_config.yaml); omit it for SQL/DuckDB-only datasets so schema registry does not probe a wrong DB.",
+  "datasets": {
+    "yelp": {
+      "mongodb_database": "yelp_db",
+      "duckdb_path": "DataAgentBench/query_yelp/query_dataset/yelp_user.db"
+    },
+    "agnews": {
+      "mongodb_database": "articles_db",
+      "duckdb_path": "DataAgentBench/query_agnews/query_dataset/metadata.db"
+    },
+    "bookreview": {
+      "sqlite_path": "DataAgentBench/query_bookreview/query_dataset/review_query.db"
+    },
+    "DEPS_DEV_V1": {
+      "sqlite_path": "DataAgentBench/query_DEPS_DEV_V1/query_dataset/project_query.db",
+      "duckdb_path": "DataAgentBench/query_DEPS_DEV_V1/query_dataset/package_query.db"
+    },
+    "crmarenapro": {
+      "sqlite_path": "DataAgentBench/query_crmarenapro/query_dataset/core_crm.db",
+      "duckdb_path": "DataAgentBench/query_crmarenapro/query_dataset/products_orders.db"
+    },
+    "GITHUB_REPOS": {
+      "sqlite_path": "DataAgentBench/query_GITHUB_REPOS/query_dataset/repo_metadata.db",
+      "duckdb_path": "DataAgentBench/query_GITHUB_REPOS/query_dataset/repo_artifacts.db"
+    },
+    "googlelocal": {
+      "sqlite_path": "DataAgentBench/query_googlelocal/query_dataset/review_query.db"
+    },
+    "music_brainz_20k": {
+      "duckdb_path": "DataAgentBench/query_music_brainz_20k/query_dataset/tracks.db"
+    },
+    "PANCANCER_ATLAS": {
+      "duckdb_path": "DataAgentBench/query_PANCANCER_ATLAS/query_dataset/pancancer_molecular.db"
+    },
+    "PATENTS": {
+      "duckdb_path": "DataAgentBench/query_PATENTS/query_dataset/patent_publication.db"
+    },
+    "stockindex": {
+      "sqlite_path": "DataAgentBench/query_stockindex/query_dataset/indexInfo_query.db",
+      "duckdb_path": "DataAgentBench/query_stockindex/query_dataset/indextrade_query.db"
+    },
+    "stockmarket": {
+      "sqlite_path": "DataAgentBench/query_stockmarket/query_dataset/stockinfo_query.db",
+      "duckdb_path": "DataAgentBench/query_stockmarket/query_dataset/stocktrade_query.db"
+    }
+  }
+}

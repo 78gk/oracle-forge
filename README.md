@@ -161,7 +161,9 @@ Use an empty line, `/q`, or `exit` to quit. Answers are plain text (no query tra
 - From **another computer**, use **`http://<server-public-ip>:8501`** only if the security group / firewall allows **TCP 8501** and the instance has a **public** IP. Private IPs like `10.x.x.x` are not reachable from the public internet without VPN or tunneling.
 - **Docker Streamlit:** Compose sets `MCP_BASE_URL=http://toolbox:5000` inside the UI container; `.env` is merged without overriding that (see `streamlit_app.py` / `run_agent`).
 
-Optional smoke eval: set `DAB_TRIALS_PER_QUERY=1` in `.env` and run `python eval/run_dab_eval.py` (after MCP is up). KB validation: `python run_injection_tests.py`.
+Optional smoke eval: set `DAB_TRIALS_PER_QUERY=1` in `.env` and run `python eval/run_dab_eval.py` (after MCP is up). Multi-dataset runs include **`per_dataset_summary`** in `eval/results.json` and the printed summary. KB validation: `python run_injection_tests.py`.
+
+**Durable routing / merge / profiles (implementation roadmap):** [eval/DURABLE_FIX_PLAN.md](eval/DURABLE_FIX_PLAN.md). Run the full unit + integration suite from the repo root: `pytest tests/ -q`.
 
 Further reading: [DataAgentBench Setup and Test Run](#dataagentbench-setup-and-test-run), [Team Workflow for Agent Improvement](#team-workflow-for-agent-improvement).
 
@@ -169,7 +171,7 @@ Further reading: [DataAgentBench Setup and Test Run](#dataagentbench-setup-and-t
 
 Workflow: [`.github/workflows/ci-cd.yml`](.github/workflows/ci-cd.yml).
 
-- **CI (every push and pull request to `main`):** runs `pytest tests/`, then builds the Streamlit Docker image (`Dockerfile.streamlit`) to verify it still builds.
+- **CI (every push and pull request to `main`):** runs `pytest tests/` (including `tests/integration/` mock MCP smoke tests), then builds the Streamlit Docker image (`Dockerfile.streamlit`) to verify it still builds.
 - **CD (push to `main` only):** optional SSH deploy so you do not pull repos by hand on the server.
 
 ### Enable automated deploy
@@ -420,6 +422,8 @@ Set these once in root `.env` (no inline PowerShell env args required):
 - `MCP_BASE_URL=http://localhost:5000`
 - `ORACLE_FORGE_MOCK_MODE=false`
 - `ORACLE_FORGE_ALLOW_MOCK_FALLBACK=false`
+- `ORACLE_FORGE_LLM_SQL=false` (set `true` to use LLM-generated SQL / Mongo pipelines from KB + schema; disables Yelp `query.json` exact-string SQL oracle — see `eval/LLM_QUERY_GENERATION_PLAN.md`)
+- `ORACLE_FORGE_SQL_STRICT_ALLOWLIST=true` (reject SQL referencing tables not in MCP schema metadata)
 - `LLM_PROVIDER=openrouter`
 - `OPENROUTER_API_KEY=<your_key>`
 - `MODEL_NAME=openai/gpt-4o-mini`
@@ -431,6 +435,21 @@ Then run:
 ```powershell
 python eval\run_dab_eval.py
 ```
+
+**Multi-dataset smoke (first N queries per `DataAgentBench/query_*` folder):**
+
+```powershell
+# First 2 queries from each discovered dataset (12 folders → up to 24 queries)
+python eval\run_dab_eval.py --scope multi --per-dataset 2 --trials 1
+
+# All queries from every dataset (large run)
+python eval\run_dab_eval.py --scope multi --per-dataset all --trials 1
+
+# Limit to specific dataset keys (comma-separated)
+python eval\run_dab_eval.py --scope multi --datasets yelp,agnews --per-dataset 2 --trials 1
+```
+
+CLI flags mirror env vars: `DAB_SCOPE`, `DAB_DATASET`, `DAB_QUERIES_PER_DATASET`, `DAB_DATASETS`, `DAB_TRIALS_PER_QUERY`. Each trial in `eval/results.json` includes a `closed_loop` object (`attempt_count`, `replans`, per-attempt `replan_context`) so you can see whether the planner retried after tool failure.
 
 Outputs are written to:
 - `eval/results.json`

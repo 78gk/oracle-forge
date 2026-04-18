@@ -1,8 +1,93 @@
 # DuckDB Schemas for DAB Datasets
 
-## Analytics Cube Dataset
+Default Oracle Forge mounts **`DataAgentBench/query_yelp/query_dataset/yelp_user.db`** (`DUCKDB_PATH`). It contains **only** the Yelp slice in the first section below.
 
-### Table: sales_fact
+Sections marked **Reference (illustrative)** describe shapes used in examples or **other** DAB files — they are **not** guaranteed to exist in `yelp_user.db` or in every benchmark file. Always introspect the active file (`information_schema.tables`, `PRAGMA`) when in doubt.
+
+---
+
+## Yelp dataset (`yelp_user.db`) — verified
+
+### Table: `review`
+
+- review_id (VARCHAR)
+- user_id (VARCHAR)
+- business_ref (VARCHAR) — aligns with Postgres `review.business_id` / Mongo `business.business_id` after normalizing `businessid_*` ↔ `businessref_*` style ids
+- rating (BIGINT) — 1–5; same semantics as Postgres `review.stars`
+- useful (BIGINT)
+- funny (BIGINT)
+- cool (BIGINT)
+- text (VARCHAR)
+- date (VARCHAR)
+
+### Table: `tip`
+
+- user_id (VARCHAR)
+- business_ref (VARCHAR)
+- text (VARCHAR)
+- date (VARCHAR)
+- compliment_count (BIGINT)
+
+### Table: `user`
+
+- user_id (VARCHAR)
+- name (VARCHAR)
+- review_count (BIGINT)
+- yelping_since (VARCHAR)
+- useful (BIGINT)
+- funny (BIGINT)
+- cool (BIGINT)
+- elite (VARCHAR)
+
+There are **no** `business` or `checkin` **tables** in this DuckDB file. Business-level fields live in **PostgreSQL `business`** and **MongoDB `business`**; check-in events for Mongo are in **`checkin`** (see `mongodb_schemas.md`).
+
+### Rating and aggregation note
+
+- Per-review scores: use **`review.rating`** (DuckDB) and **`review.stars`** (Postgres). **`business` in Postgres has no `stars` column** in the seeded schema.
+- Do not assume **embedded reviews** on Mongo `business` in the default dump; aggregate from SQL/DuckDB review tables when the question is about star ratings.
+
+---
+
+## PANCANCER_ATLAS — `pancancer_molecular.db` (verified DataAgentBench)
+
+**Path:** `DataAgentBench/query_PANCANCER_ATLAS/query_dataset/pancancer_molecular.db`
+
+Pair with PostgreSQL **`pancancer_clinical.clinical_info`** (`patient_id` and TCGA clinical fields). Join keys use **TCGA sample / participant barcodes** — see `join_key_mappings.md` (`resolve_tcga_id`).
+
+### Table: `Mutation_Data`
+
+- ParticipantBarcode (VARCHAR) — e.g. `TCGA-AX-A3G8`
+- Tumor_SampleBarcode, Tumor_AliquotBarcode, Normal_SampleBarcode, Normal_AliquotBarcode (VARCHAR)
+- Normal_SampleTypeLetterCode (VARCHAR)
+- Hugo_Symbol (VARCHAR)
+- HGVSp_Short, HGVSc (VARCHAR)
+- Variant_Classification (VARCHAR)
+- CENTERS, FILTER (VARCHAR)
+
+### Table: `RNASeq_Expression`
+
+- ParticipantBarcode (VARCHAR)
+- SampleBarcode, AliquotBarcode (VARCHAR)
+- SampleTypeLetterCode, SampleType (VARCHAR)
+- Symbol (VARCHAR)
+- Entrez (BIGINT)
+- normalized_count (DOUBLE)
+
+**Deprecated KB sketch:** an older one-line `gene_expression` example with `patient_id` / `gene_symbol` is **not** this file’s layout — use **`Mutation_Data`** and **`RNASeq_Expression`** as above.
+
+---
+
+## Stock benchmarks — DuckDB identifier quoting
+
+**Paths:** e.g. `query_stockmarket/query_dataset/stocktrade_query.db`, `query_stockindex/query_dataset/indextrade_query.db`.
+
+Table names may include **`#`** or other special characters. Quote identifiers: e.g. `SELECT * FROM "CARR#"` — not `FROM CARR#`.
+
+---
+
+## Reference (illustrative): Analytics cube — not in `yelp_user.db`
+
+### Table: `sales_fact`
 
 - sale_id (BIGINT, PK)
 - customer_id (INTEGER)
@@ -11,7 +96,7 @@
 - amount (DECIMAL(10,2))
 - quantity (INTEGER)
 
-### Table: time_dimension
+### Table: `time_dimension`
 
 - date_key (DATE, PK)
 - year (INTEGER)
@@ -22,62 +107,28 @@
 
 ---
 
-## crmarenapro Dataset
+## Reference (illustrative): crmarenapro file-backed DuckDB
 
-### Table: churn_predictions
+**Path:** `DataAgentBench/query_crmarenapro/query_dataset/sales_pipeline.duckdb` (and **`activities.duckdb`** — introspect).
 
-Used in J1 (churn risk score join). Join key: `customer_ref` (TEXT, format `"C{customer_id}"` — strip leading `"C"` to match PostgreSQL INT `customer_id`).
-
-- id (BIGINT, PK)
-- customer_ref (TEXT)  — `"C1001"`, `"C1002"`, etc.
-- churn_score (FLOAT)  — 0.0 to 1.0; `> 0.7` = high churn risk
-- prediction_date (DATE)
-- model_version (TEXT)
-
-**J1 join fix:**
-```python
-df_churn['cid_int'] = df_churn['customer_ref'].str.lstrip('C').astype(int)
-merged = pg_customers.merge(df_churn, left_on='customer_id', right_on='cid_int')
-```
-
-### Table: loyalty
-
-Used in M6 (SQLite `customers` TEXT → DuckDB `loyalty` INTEGER join). Join key: `cust_id` (INTEGER, first 5 digits of SQLite `customer_id` numeric part after stripping prefix).
-
-- id (BIGINT, PK)
-- cust_id (INTEGER)   — e.g. 98765 (first 5 digits of SQLite `customer_id` like `"ID-98765"`)
-- loyalty_points (INTEGER)
-- tier (TEXT)         — `"bronze"`, `"silver"`, `"gold"`, `"platinum"`
-- joined_date (DATE)
-
-**M6 join fix:**
-```python
-from utils.join_key_resolver import JoinKeyResolver
-resolver = JoinKeyResolver()
-sqlite_df['cust_id_norm'] = sqlite_df['customer_id'].apply(
-    lambda k: int(resolver.resolve_chain(k, ['strip_prefix', 'first_5_chars']))
-)
-merged = sqlite_df.merge(loyalty_df, left_on='cust_id_norm', right_on='cust_id')
-```
+Older docs sometimes showed hypothetical **`churn_predictions`** / **`loyalty`** tables. The **loaded** DAB DuckDB files may differ; **PostgreSQL `crm_support`** is the authoritative relational source for support-case objects when that seed is applied (`Case`, `emailmessage`, … — see `postgresql_schemas.md`). Introspect the active `.duckdb` file for exact table/column names.
 
 ---
 
-## GitHub Dataset
+## Reference (illustrative): GitHub dataset
 
-### Table: contributors
+**Path:** `DataAgentBench/query_GITHUB_REPOS/query_dataset/repo_artifacts.db`
 
-Used in M4 (GitHub contributor–dependency graph). Join key: `contributor_login` (TEXT) matched against SQLite `dependencies.contributor_login`.
+### Table: `contributors` (typical)
 
 - id (BIGINT, PK)
-- repo_id (BIGINT, FK → repositories.id in SQLite)
-- contributor_login (TEXT)  — GitHub username, e.g. `"octocat"`
+- repo_id (BIGINT)
+- contributor_login (TEXT)
 - commits (INTEGER)
 - additions (INTEGER)
 - deletions (INTEGER)
 
-### Table: repositories (DuckDB mirror)
-
-Analytical copy of the SQLite `repositories` table for window-function aggregations. `repo_id` is the canonical join key to SQLite.
+### Table: `repositories` (typical)
 
 - repo_id (BIGINT, PK)
 - name (TEXT)
@@ -86,155 +137,42 @@ Analytical copy of the SQLite `repositories` table for window-function aggregati
 - forks (INTEGER)
 - created_at (DATE)
 
-**M4 execution pattern:**
-```python
-# DuckDB: unique contributors per repo
-duck_df = duckdb_conn.execute(
-    "SELECT repo_id, COUNT(DISTINCT contributor_login) AS contributor_count FROM contributors GROUP BY repo_id"
-).df()
-
-# SQLite: repos that appear in dependency graph
-sqlite_df = sqlite_conn.execute(
-    "SELECT DISTINCT dependent_repo_id AS repo_id FROM dependencies"
-).fetchdf()
-
-# Python merge — never cross-engine SQL
-result = duck_df[duck_df['repo_id'].isin(sqlite_df['repo_id'])]
-```
-
----
-
-## PANCANCER_ATLAS Dataset
-
-### Table: gene_expression
-
-Used in M5 (TP53 high-risk mutation + low gene expression). Join key: `patient_id` (TEXT, format `"TCGA-AB-1234"`) — must be resolved to PostgreSQL format via `resolve_tcga_id()`.
-
-- id (BIGINT, PK)
-- patient_id (TEXT)        — `"TCGA-AB-1234"` format
-- gene_symbol (TEXT)       — e.g. `"TP53"`, `"BRCA1"`
-- expression_value (FLOAT) — normalised RPKM; low = < 2.0 threshold
-- sample_type (TEXT)       — `"tumor"` or `"normal"`
-- platform (TEXT)
-
-**M5 join fix:**
-```python
-from utils.join_key_resolver import JoinKeyResolver
-resolver = JoinKeyResolver()
-
-# DuckDB: low TP53 expression patients
-expr_df = duckdb_conn.execute(
-    "SELECT patient_id, expression_value FROM gene_expression "
-    "WHERE gene_symbol = 'TP53' AND expression_value < 2.0"
-).df()
-expr_df['pg_patient_id'] = expr_df['patient_id'].apply(resolver.resolve_tcga_id)
-
-# PostgreSQL: high-risk TP53 mutations
-mut_df = pg_conn.fetch("SELECT patient_id FROM mutations WHERE gene = 'TP53' AND risk_level = 'high'")
-pg_df = pd.DataFrame(mut_df, columns=['patient_id'])
-
-# Python merge on resolved key
-result = expr_df[expr_df['pg_patient_id'].isin(pg_df['patient_id'])]
-```
-
----
-
-## Yelp Dataset
-
-### Table: business
-
-**`business.stars` is a stale pre-computed aggregate** — see Rating Source Warning below.
-
-- business_id (TEXT, PK)   — 22-char alphanumeric, direct match with MongoDB
-- name (TEXT)
-- city (TEXT)
-- state (TEXT)
-- stars (FLOAT)            — ⚠ STALE weekly batch aggregate; do NOT use for rating queries
-- review_count (INTEGER)
-- is_open (INTEGER)        — 1 = open, 0 = permanently closed; ALWAYS filter on this
-- categories (TEXT)        — pipe-separated: `"Restaurants|Pizza|Italian"`; use CategoryMatcher
-
-### Table: checkin
-
-Used in M2 (businesses with > 100 check-ins). Join key: `business_id` (TEXT, direct match with MongoDB `reviews.business_id`).
-
-- business_id (TEXT, FK → business.business_id)
-- checkin_date (DATE)
-- checkin_count (INTEGER)  — daily check-in count
-
-## Yelp Dataset — Rating Source Warning
-
-**`business.stars` is a stale pre-computed aggregate**, updated weekly by a batch job.
-
-For any query asking for "average rating", "review score", or rating-based filters on Yelp data:
-
-- **Always recompute from `MongoDB reviews.stars`** grouped by `business_id`.
-- **Do NOT use `business.stars`** as if it were a live per-review average.
-
-```python
-# Correct: recompute from live reviews
-pipeline = [
-    {"$group": {"_id": "$business_id", "avg_rating": {"$avg": "$stars"}}}
-]
-
-# Wrong: stale weekly aggregate
-# SELECT stars FROM business WHERE ...
-```
-
-System prompt guard: "If query mentions 'rating' or 'review score' on Yelp data, ALWAYS join MongoDB reviews — do NOT use `business.stars`."
+Introspect — names may vary slightly by export.
 
 ---
 
 ## Important for DAB
 
-DuckDB is used for analytical queries that aggregate across large datasets.
-Optimize for: GROUP BY, window functions, time-series analysis.
+DuckDB is used for analytical queries (GROUP BY, window functions). **Fiscal calendar** notes for telecom-style examples: see `kb/domain/domain_terms/business_glossary.md`.
 
-**Fiscal Calendar Note:** Telecom fiscal Q3 = Oct-Dec (not Jul-Sep)
-Check kb/domain/domain_terms/business_glossary.md for dataset-specific calendars.
+## DAB-style SQL examples (reference schemas only)
 
-## DAB-Specific Query Examples
-
-**Declining repeat purchase rate by segment (Q3):**
+Examples below assume **`sales_fact`** / **`time_dimension`** exist in the active DuckDB file — they do **not** apply to `yelp_user.db` alone.
 
 ```sql
 SELECT
     customer_segment,
     fiscal_quarter,
     COUNT(DISTINCT customer_id) AS customers,
-    SUM(amount) AS revenue,
-    revenue / LAG(revenue) OVER (PARTITION BY customer_segment ORDER BY fiscal_quarter) - 1 AS growth_rate
+    SUM(amount) AS revenue
 FROM sales_fact
 JOIN time_dimension ON sales_fact.sale_date = time_dimension.date_key
 WHERE time_dimension.fiscal_quarter = 3
-  AND time_dimension.fiscal_year = 2025
 GROUP BY customer_segment, fiscal_quarter;
 ```
 
-**Ticket volume correlation (after conductor merges PG + Mongo):**
+---
 
-```sql
-SELECT
-    t.customer_id,
-    t.revenue,
-    m.ticket_count,
-    CORR(t.revenue, m.ticket_count) OVER () AS revenue_ticket_correlation
-FROM pg_transactions t
-JOIN mongo_tickets m ON t.customer_id = m.customer_id;
-```
+## Injection tests
 
-**Window function for rolling 90-day active customers:**
+Q: Which tables exist in the default `yelp_user.db`?
 
-```sql
-SELECT
-    customer_id,
-    MAX(sale_date) AS last_purchase,
-    CASE WHEN MAX(sale_date) >= CURRENT_DATE - INTERVAL '90 days' THEN 'active' ELSE 'inactive' END AS status
-FROM sales_fact
-GROUP BY customer_id;
-```
+A: `review`, `tip`, and `user`.
 
-## Injection Test
+Q: Which DuckDB tables hold PANCANCER molecular data in the shipped file?
 
-Q: What is DuckDB used for in DAB?
-A: Analytical queries that aggregate across large datasets
+A: **`Mutation_Data`** and **`RNASeq_Expression`** in `pancancer_molecular.db`.
+
+Q: Why might `SELECT * FROM CARR#` fail?
+
+A: **`#` requires a quoted identifier** (e.g. `"CARR#"`); the bare token is a syntax error.

@@ -1,71 +1,73 @@
+# Cross-Database Join Patterns
+
+Patterns below are **procedural**. Table names must match the **active** database (see `postgresql_schemas.md`, `mongodb_schemas.md`). Telecom/healthcare examples use **reference** schemas; DataAgentBench **`crm_support`** uses **`"Case"`**, **`emailmessage`**, etc., not generic `transactions` + `support_tickets` unless your seed adds them.
 
 ---
 
-## File: `kb/domain/joins/cross_db_join_patterns.md`
+## Pattern 1: PostgreSQL to MongoDB (one-to-many)
 
-```markdown
-# Cross-Database Join Patterns
-
-## Pattern 1: PostgreSQL to MongoDB (One-to-Many)
-
-**Scenario:** Join customer transactions (PG) with support tickets (Mongo)
+**Scenario:** Join customer facts (PostgreSQL) with related documents (MongoDB).
 
 **Steps:**
-1. **ALWAYS start with PostgreSQL (primary source of truth — never reverse this order, see failure Q089).** Query PostgreSQL first for customer_ids.
-2. Transform each ID: f"CUST-{customer_id}"
-3. Query MongoDB with transformed IDs
-4. Merge results on transformed key
 
-**MongoDB Aggregation Pipeline:**
+1. **Start from PostgreSQL** when it holds stable identifiers (see eval notes — do not reverse order blindly).
+2. If Mongo uses prefixed strings (e.g. telecom `CUST-{id}`), transform: `f"CUST-{customer_id}"`.
+3. Query MongoDB with transformed IDs.
+4. Merge on the transformed key.
+
+**Example MongoDB aggregation (illustrative collection names):**
+
 ```javascript
 db.support_tickets.aggregate([
   { $match: { customer_id: { $in: transformed_ids } } },
   { $group: { _id: "$customer_id", ticket_count: { $sum: 1 } } }
 ])
-
 ```
 
-## Pattern 2: MongoDB to PostgreSQL (String to INT)
+For **seeded Yelp**, per-review data is **not** in Mongo — use Postgres/DuckDB `review` (see `join_key_mappings.md`).
 
-Scenario: Join MongoDB customer data to PostgreSQL transactions
+---
 
-Steps:
+## Pattern 2: MongoDB to PostgreSQL (string to INT)
 
-Query MongoDB for customer_ids (strings like "CUST-12345")
+**Scenario:** MongoDB stores `"CUST-12345"`; PostgreSQL stores `12345`.
 
-Extract INT: int(id.replace('CUST-', ''))
+**Steps:**
 
-Query PostgreSQL with INTs
+1. Read string ids from MongoDB.
+2. Extract the numeric part (e.g. strip `CUST-`).
+3. Query PostgreSQL with integers (or cast consistently).
+4. Merge results.
 
-Merge results
+Use `JoinKeyResolver` from `utils/join_key_resolver.py` when available.
 
-## Pattern 3: Three-Way Join (PG → Mongo → DuckDB)
+---
 
-Scenario: Transaction data + support tickets + analytics
+## Pattern 3: Three-way (PostgreSQL → MongoDB → DuckDB)
 
-Steps:
+**Scenario:** Combine relational ids, document attributes, and analytical columns.
 
-PG worker: get base customer transactions
+**Steps:**
 
-Mongo worker: get ticket counts using transformed IDs
+1. PostgreSQL worker: base keys / facts.
+2. Mongo worker: enrich using transformed join keys.
+3. Merge conductor: align on shared logical id.
+4. DuckDB worker: aggregates/windows on the merged set (or push down if one engine holds all needed columns).
 
-Conductor merges PG + Mongo on customer_id
+---
 
-DuckDB worker: run analytical aggregation on merged results
+## Failure recovery
 
-## Failure Recovery Pattern
+If a join returns empty:
 
-If join returns empty result:
+1. Check INT vs STRING and prefix mismatches (`resolve_join_key`, `resolve_tcga_id` for TCGA barcodes).
+2. Confirm collection/table names exist in the **connected** seed (e.g. no `reviews` in Mongo for default Yelp).
+3. Retry after normalization.
 
-Check format mismatch (INT vs STRING with prefix)
+---
 
-Apply transformation
+## Injection test
 
-Retry join
+Q: What are the steps for a classic PostgreSQL → MongoDB join with `CUST-` prefixes?
 
-Log to failure_log.md if still failing
-
-## Injection Test
-
-Q: What are the steps for PostgreSQL to MongoDB join?
-A: Query PG, transform IDs with f"CUST-{id}", query Mongo with transformed IDs, merge results
+A: Query PostgreSQL for base ids, transform with `f"CUST-{id}"`, query Mongo with those strings, merge on the same logical customer.
